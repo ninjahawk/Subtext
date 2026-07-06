@@ -1,101 +1,128 @@
 # Subtext
 
-**Watch a language model think, live.** Subtext is a local visualization of the
-J-space — the emergent "global workspace" Anthropic described in
-[*Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html)
-(July 2026). You chat with a small local model and watch its silent thoughts
-form in real time: while it reads your message, while it reasons, and in the
-moments before words leave its mouth.
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-CUDA-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Model](https://img.shields.io/badge/Model-Qwen3.5--4B-6cb8e0)](https://huggingface.co/Qwen/Qwen3.5-4B)
+[![Lens](https://img.shields.io/badge/Lens-qwen--n1000-e8a13c)](https://huggingface.co/neuronpedia/jacobian-lens)
+[![License](https://img.shields.io/badge/License-Apache_2.0-green)](LICENSE)
 
-The readout is the [Jacobian lens](https://github.com/anthropics/jacobian-lens):
-for a residual-stream activation at any layer, it answers *"which vocabulary
-words is this internal state disposed to make the model say, now or later?"*
-Subtext applies the lens at nine depths on every token and renders the result
-as an instrument you can read.
+*A real-time instrument for observing the verbal workspace of a language model as it reads, reasons, and speaks.*
 
-## What you're looking at
+![Subtext demo](media/demo.gif)
 
-- **Every glowing word is a silent thought** — an internal activation pushing
-  the model toward saying that word. It is not text the model wrote.
-- **Vertical position = layer.** Thoughts near the top live in early layers
-  (perception); they sink toward the bottom rail as they approach speech.
-  Multi-step reasoning happens in between — ask a two-hop question
-  ("the currency of the country shaped like a boot?") and the intermediate
-  step (*Italy*) lights up mid-network before the answer (*euro*) forms below it.
-- **Size and brightness are absolute strength.** A faint thought really is
-  faint. Amber = while reading you; blue = while composing its reply.
-- **Hover any word** for its layer-by-layer trace; **click** for an inspector
-  with strength history.
-- The right panel is the paper trail: conversation, counters, a live
-  top-of-mind ranking, and a per-token ledger of everything the lens saw.
+**[▶ Full demo video](media/demo.mp4)** · **[📄 The paper this builds on](https://transformer-circuits.pub/2026/workspace/index.html)** · **[🔬 Reference implementation](https://github.com/anthropics/jacobian-lens)**
 
-Try: `Is this correct? 12 + 5 = 1` — and watch *incorrect* ignite in the
-middle layers while the model is still reading the equation, several tokens
-before it begins to answer.
+---
 
-## Requirements
+## Overview
 
-- NVIDIA GPU with ~10 GB VRAM (developed on an RTX 5070, 12 GB)
-- Python 3.11+, CUDA build of PyTorch
-- ~9 GB disk for Qwen3.5-4B + the pre-fitted lens (downloaded on first run)
+Recent work from Anthropic identified a small set of internal representations in
+language models — the *J-space* — that behaves like a global workspace: its
+contents can be verbally reported by the model, deliberately modulated, and are
+causally used for multi-step reasoning, while the surrounding majority of neural
+activity remains inaccessible to report. The identification tool is the
+Jacobian lens, which transports a residual-stream activation at any layer into
+the final-layer basis and decodes it through the model's own unembedding,
+answering: *which vocabulary words is this internal state disposed to produce,
+now or later?*
 
-## Install & run
+Subtext applies that method continuously during live conversation with a local
+model. On every token — both while the model ingests the user's message and
+while it generates its reply — the lens is read at nine depths and the result
+is rendered as it happens. The intermediate steps of the model's computation
+become directly watchable: verdicts form during reading, several tokens before
+any output; planned words hold at high strength while unrelated tokens are
+being emitted; two-hop questions surface their unspoken middle term.
+
+A representative example: given `Is this correct? 12 + 5 = 1`, the workspace
+readout shows *incorrect* active in mid layers while the equation is still
+being read, and given the country-shaped-like-a-boot currency question, *Italy*
+appears at layer 20 and *euros* at layer 26 before generation begins —
+reproducing the two-hop signature reported in the paper.
+
+## Reading the display
+
+- **Each rendered word is a lens readout, not model output.** It indicates an
+  internal activation disposing the model toward that word.
+- **Vertical position corresponds to layer.** Early layers (perception) are at
+  the top; readouts approach the bottom rail as they approach emission.
+- **Size and opacity encode absolute readout strength.** The display applies a
+  fixed monotone mapping from lens probability; weak readouts are rendered
+  weak. Amber marks readouts taken while reading the user; blue while
+  generating.
+- **Hover** shows a word's per-layer activation profile; **click** opens an
+  inspector with peak strength, mean depth, and strength history.
+- The right panel records everything the canvas curates: the conversation, a
+  live ranking of currently-active readouts, and a per-token ledger.
+
+## Method
+
+```
+browser (single HTML file)  ⇐ websocket ⇐  server.py
+    Qwen3.5-4B (bf16, HF transformers, KV cache)
+    pre-fitted Jacobian lens: neuronpedia/jacobian-lens, revision qwen-n1000
+    per token: residual hooks at 9 layers → J_l transport → unembed
+             → full-vocabulary softmax → word-start top-k → frame
+```
+
+Each exchange has two phases. A single prefill pass covers the user's message,
+with lens readouts taken at every position (the *reading* phase); generation
+then proceeds token-by-token with a KV cache, reading the lens at the newest
+position each step (the *thinking* phase). The lens adds a per-layer
+matrix-vector product and an unembedding per token, so streaming runs at the
+model's native generation speed.
+
+**Display filtering.** Raw lens top-k contains punctuation and BPE
+continuation fragments (e.g. *itude*, from *cert‑itude*), which are not
+meaningful as readouts. Display is restricted to word-initial vocabulary
+tokens, following the reference implementation's `mask_display` with a
+stricter word-start criterion. Probabilities are computed over the full
+vocabulary before any filtering, so filtering affects legibility only, never
+the readout itself.
+
+## Validation
+
+`verify_accuracy.py` compares this implementation's live path (forward hooks,
+KV cache enabled) against the reference `JacobianLens.apply()` on identical
+inputs. Across 4 layers × 3 positions on the walkthrough prompt, top-5
+readouts match exactly, with cosine similarity ≥ 0.99998 between logit
+vectors, and reproduce the expected two-hop intermediates. The audit can be
+re-run at any time with the server stopped.
+
+## Setup
+
+Requirements: an NVIDIA GPU with ~10 GB of VRAM, Python 3.11+, and a CUDA
+build of PyTorch. First launch downloads the model and lens (~9 GB total) and
+builds a display-token mask (~1 minute, cached).
 
 ```bash
 git clone https://github.com/ninjahawk/Subtext
 cd Subtext
-pip install -r requirements.txt   # torch: install your CUDA build first if needed
-python server.py                  # first run downloads model + lens, builds a token mask
+pip install -r requirements.txt
+python server.py
 # → http://localhost:8765
 ```
 
-Windows note: run `python -u -X utf8 server.py` (or just `start.bat`).
+On Windows, run `python -u -X utf8 server.py`, or use `start.bat`.
 
-## How it works
+## Limitations
 
-```
-browser (index.html, one file, no build)  ⇐ websocket ⇐  server.py
-    Qwen3.5-4B (bf16, HF transformers, KV cache)
-    + pre-fitted Jacobian lens (neuronpedia/jacobian-lens, rev qwen-n1000)
-    per token: residual hooks at 9 layers → J_l transport → unembed
-             → softmax → top-k word-start tokens → frame {word, p, depth, profile}
-```
+The instrument inherits the method's limitations. The lens reads only concepts
+that correspond to single vocabulary tokens; multi-token concepts are invisible
+or fragmentary. It approximately captures the workspace identified in the
+paper, not the entirety of the model's internal state, and layers below the
+fitted range are not observed. Interpretation should also respect the paper's
+own framing: workspace readouts demonstrate functional availability of
+information for report and reasoning; they do not demonstrate subjective
+experience.
 
-Two phases per exchange: a **reading** pass over your message (one prefill,
-lens at every position), then **thinking** frames streamed during generation.
-The lens costs a few small matmuls per token, so it runs at full generation
-speed.
+## Acknowledgements
 
-### Display filtering
+The method and reference implementation are by Anthropic
+([jacobian-lens](https://github.com/anthropics/jacobian-lens), Apache 2.0).
+Pre-fitted lens weights are published by
+[Neuronpedia](https://huggingface.co/neuronpedia/jacobian-lens). The model is
+[Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B). Subtext is an
+independent project and is not affiliated with Anthropic.
 
-Raw lens top-k is full of punctuation and BPE fragments ("itude" is a piece of
-*certitude*, not a thought). Subtext restricts display to word-start tokens
-(the paper's own `mask_display` filter, tightened), and maps strength through
-an absolute scale — the display never inflates a weak readout. Ranks and
-probabilities are computed over the full vocabulary first, so filtering never
-changes what the lens actually said, only what is legible.
-
-## Accuracy
-
-`verify_accuracy.py` compares this live path (forward hooks + KV cache)
-against the reference `JacobianLens.apply()` from Anthropic's repo, token by
-token. On the walkthrough prompt, all layer/position top-5 readouts match
-exactly (cosine ≥ 0.99998), and reproduce the paper's two-hop signature
-(*Italy* at layer 20, *euros* at layer 26, before any output). Run it yourself
-with the server stopped.
-
-## Honest limitations
-
-Inherited from the method (see §"Limitations" of the paper): the lens only
-reads concepts that are single tokens in the model's vocabulary; it
-approximately captures the workspace, not all of it; and none of this
-demonstrates subjective experience — the paper is explicit that the workspace
-shows *access*-consciousness-like function, not feeling.
-
-## Credits
-
-- Method & reference implementation: [Anthropic — jacobian-lens](https://github.com/anthropics/jacobian-lens) (Apache 2.0)
-- Pre-fitted lens weights: [Neuronpedia](https://huggingface.co/neuronpedia/jacobian-lens)
-- Model: [Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B)
-
-Apache 2.0. Built by [@ninjahawk](https://github.com/ninjahawk) with Claude.
+Licensed under Apache 2.0.
