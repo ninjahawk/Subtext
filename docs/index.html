@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Subtext</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080a; --panel: #0b0b0e; --hair: rgba(255,255,255,.06);
+    --ink: rgba(255,255,255,.92); --dim: rgba(255,255,255,.40); --faint: rgba(255,255,255,.18);
+    --read: #e8a13c; --think: #6cb8e0;
+    --sans: "Inter", "Segoe UI", system-ui, sans-serif;
+    --mono: "Cascadia Code", "Consolas", monospace;
+    --serif: "Source Serif 4", Georgia, serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); }
+  body { font: 13px/1.5 var(--sans); color: var(--ink);
+         display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+
+  /* ---------- header ---------- */
+  #hdr { display: flex; align-items: baseline; gap: 14px; height: 46px; flex: none;
+         padding: 14px 20px 0; border-bottom: 1px solid var(--hair); user-select: none; }
+  #hdr .mark { font-size: 13px; font-weight: 600; letter-spacing: .01em; }
+  #hdr .sub { font-size: 11.5px; color: var(--faint); font-weight: 400; }
+  #hdr .right { margin-left: auto; display: flex; align-items: center; gap: 16px;
+                font-size: 11px; color: var(--dim); transform: translateY(-3px); }
+  #conn { font-feature-settings: "tnum"; }
+  #phase { display: flex; align-items: center; gap: 7px; min-width: 80px;
+           font-size: 11px; font-weight: 500; color: var(--faint); }
+  #phase .dot { width: 6px; height: 6px; border-radius: 50%; background: #26262c;
+                transition: background .3s; }
+  #phase.reading { color: var(--read); }
+  #phase.reading .dot { background: var(--read); animation: pulse 1.2s ease-in-out infinite; }
+  #phase.thinking { color: var(--think); }
+  #phase.thinking .dot { background: var(--think); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3 } }
+
+  /* ---------- layout ---------- */
+  #main { flex: 1; display: flex; min-height: 0; }
+  #stage { position: relative; flex: 1; min-width: 0; }
+  #mind { position: absolute; inset: 0; }
+  #foot { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center;
+          font-size: 10.5px; color: var(--faint); user-select: none; pointer-events: none; }
+  #foot b { color: var(--dim); font-weight: 500; }
+
+  /* inspector */
+  #inspect { position: absolute; top: 16px; left: 16px; width: 240px; display: none;
+             background: rgba(11,11,14,.88); border: 1px solid var(--hair); border-radius: 12px;
+             padding: 14px 16px 12px; backdrop-filter: blur(18px); z-index: 4; }
+  #inspect h3 { font: italic 500 21px var(--serif); margin-bottom: 8px; }
+  #inspect .kv { display: flex; justify-content: space-between; font-size: 11px;
+                 color: var(--dim); padding: 3px 0; }
+  #inspect .kv b { color: var(--ink); font-weight: 500; font-feature-settings: "tnum"; }
+  #inspect canvas { width: 100%; height: 44px; margin-top: 8px; opacity: .85; }
+  #inspect .x { position: absolute; top: 8px; right: 12px; cursor: pointer;
+                color: var(--faint); font-size: 12px; }
+  #inspect .x:hover { color: var(--ink); }
+
+  /* ---------- console ---------- */
+  #console { width: 360px; flex: none; border-left: 1px solid var(--hair);
+             background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  .cap { font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+         color: var(--faint); font-weight: 500; padding: 14px 18px 8px; user-select: none; }
+
+  /* chat */
+  #chat { display: flex; flex-direction: column; max-height: 40%; border-bottom: 1px solid var(--hair); }
+  #log { overflow-y: auto; padding: 0 18px; scrollbar-width: thin;
+         scrollbar-color: rgba(255,255,255,.10) transparent; }
+  .msg { padding: 8px 0 9px; border-bottom: 1px solid rgba(255,255,255,.035); }
+  .msg:last-child { border-bottom: 0; }
+  .msg .who { font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+              color: var(--faint); font-weight: 600; margin-bottom: 3px; }
+  .msg.user .who { color: color-mix(in srgb, var(--read) 70%, transparent); }
+  .msg.bot .who { color: color-mix(in srgb, var(--think) 70%, transparent); }
+  .msg .body { font-size: 12.5px; line-height: 1.55; white-space: pre-wrap;
+               word-break: break-word; color: rgba(255,255,255,.78); }
+  .msg.user .body .read { color: var(--read); }
+  #inrow { display: flex; gap: 8px; padding: 12px 18px 6px; }
+  #inp { flex: 1; background: rgba(255,255,255,.04); border: 1px solid var(--hair);
+         border-radius: 9px; outline: 0; color: var(--ink); font: 12.5px var(--sans);
+         padding: 8px 12px; transition: border-color .15s; }
+  #inp:focus { border-color: rgba(255,255,255,.18); }
+  #inp::placeholder { color: rgba(255,255,255,.22); }
+  #send { border: 0; border-radius: 9px; padding: 0 16px; cursor: pointer;
+          background: rgba(255,255,255,.92); color: #000; font: 500 12px var(--sans); }
+  #send:hover:not(:disabled) { background: #fff; }
+  #send:disabled { opacity: .25; cursor: default; }
+  #chips { display: flex; gap: 6px; padding: 6px 18px 14px; flex-wrap: wrap; }
+  .chip { font-size: 10.5px; color: var(--dim); border: 1px solid var(--hair);
+          border-radius: 999px; padding: 3px 11px; cursor: pointer;
+          transition: all .15s; white-space: nowrap; overflow: hidden;
+          text-overflow: ellipsis; max-width: 100%; }
+  .chip:hover { color: var(--ink); border-color: rgba(255,255,255,.22); }
+
+  /* stats */
+  #stats { display: grid; grid-template-columns: repeat(4, 1fr);
+           border-bottom: 1px solid var(--hair); }
+  #stats .cell { padding: 12px 0 13px; text-align: center; }
+  #stats .cell + .cell { border-left: 1px solid var(--hair); }
+  #stats .n { font: 300 24px var(--sans); font-feature-settings: "tnum";
+              color: var(--ink); letter-spacing: -.01em; }
+  #stats .l { font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+              color: var(--faint); margin-top: 1px; }
+
+  /* top of mind */
+  #topmind { border-bottom: 1px solid var(--hair); padding-bottom: 10px; }
+  .tm-row { display: flex; align-items: center; gap: 10px; padding: 2.5px 18px; height: 22px; }
+  .tm-row .w { font: italic 400 14px var(--serif); width: 104px; white-space: nowrap;
+               overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+               color: rgba(255,255,255,.85); }
+  .tm-row .w:hover { color: #fff; }
+  .tm-row .bar { flex: 1; height: 2px; background: rgba(255,255,255,.05); border-radius: 1px; }
+  .tm-row .bar i { display: block; height: 100%; border-radius: 1px; background: rgba(255,255,255,.75);
+                   transition: width .18s ease-out; }
+  .tm-row .d { font: 10px var(--mono); color: var(--faint); width: 28px; text-align: right; }
+
+  /* ledger */
+  #ledger-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  #ledger { flex: 1; overflow-y: auto; padding: 0 0 10px; scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,.10) transparent; }
+  .lg-row { display: flex; align-items: center; gap: 9px; padding: 2px 18px 2px 15px;
+            white-space: nowrap; overflow: hidden; }
+  .lg-row .ph { width: 2px; height: 12px; border-radius: 1px; flex: none; background: #222; }
+  .lg-row.reading .ph { background: var(--read); }
+  .lg-row.thinking .ph { background: var(--think); }
+  .lg-row .tk { font: 10.5px var(--mono); color: rgba(255,255,255,.80);
+                min-width: 70px; max-width: 70px; overflow: hidden;
+                text-overflow: ellipsis; flex: none; }
+  .lg-row .th { display: flex; gap: 10px; overflow: hidden; align-items: center; }
+  .lg-row .th .t { display: flex; align-items: center; gap: 4px; flex: none; }
+  .lg-row .th .t span { font: italic 400 11.5px var(--serif); color: rgba(255,255,255,.55); }
+  .lg-row .th .t i { display: block; width: 16px; height: 2px;
+                     background: rgba(255,255,255,.07); border-radius: 1px; position: relative; }
+  .lg-row .th .t i b { position: absolute; inset: 0 auto 0 0; border-radius: 1px;
+                       background: rgba(255,255,255,.55); }
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <span class="mark">Subtext</span>
+  <span class="sub">the words beneath the words</span>
+  <div class="right">
+    <span id="export" style="cursor:pointer" title="download this session as a replay file">⤓ session</span>
+    <span id="conn">connecting…</span>
+    <div id="phase"><span class="dot"></span><span id="phasetext">idle</span></div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="stage">
+    <canvas id="mind"></canvas>
+    <div id="inspect">
+      <span class="x">✕</span>
+      <h3 id="in-word">—</h3>
+      <div class="kv"><span>strength</span><b id="in-now">—</b></div>
+      <div class="kv"><span>peak</span><b id="in-peak">—</b></div>
+      <div class="kv"><span>depth</span><b id="in-depth">—</b></div>
+      <div class="kv"><span>frames</span><b id="in-frames">—</b></div>
+      <canvas id="in-spark" width="208" height="44"></canvas>
+    </div>
+    <div id="foot">
+      thoughts sink toward speech · <b>size</b> = strength ·
+      <b style="color:var(--read)">amber</b> = while reading you ·
+      <b style="color:var(--think)">blue</b> = while replying · hover a word for its layer trace
+    </div>
+  </div>
+
+  <div id="console">
+    <div id="chat">
+      <div class="cap">conversation</div>
+      <div id="log"></div>
+      <div id="inrow">
+        <input id="inp" placeholder="say something, then watch" autocomplete="off">
+        <button id="send">Send</button>
+      </div>
+      <div id="chips">
+        <span class="chip">Is this correct? 12 + 5 = 1</span>
+        <span class="chip">The currency of the country shaped like a boot is…</span>
+        <span class="chip">Name an animal that spins webs. One word only.</span>
+      </div>
+    </div>
+
+    <div id="stats">
+      <div class="cell"><div class="n" id="s-read">0</div><div class="l">read</div></div>
+      <div class="cell"><div class="n" id="s-said">0</div><div class="l">said</div></div>
+      <div class="cell"><div class="n" id="s-thoughts">0</div><div class="l">thoughts</div></div>
+      <div class="cell"><div class="n" id="s-tps">–</div><div class="l">tok/s</div></div>
+    </div>
+
+    <div id="topmind">
+      <div class="cap">top of mind</div>
+      <div id="tm-rows"></div>
+    </div>
+
+    <div id="ledger-wrap">
+      <div class="cap">ledger</div>
+      <div id="ledger"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------------- word → silhouette ---------------- */
+const EMOJI = {
+  dog:"🐕",puppy:"🐕",cat:"🐈",kitten:"🐈",spider:"🕷️",ant:"🐜",bird:"🐦",fish:"🐟",
+  horse:"🐎",cow:"🐄",pig:"🐖",mouse:"🐁",rat:"🐀",rabbit:"🐇",bunny:"🐇",fox:"🦊",
+  bear:"🐻",panda:"🐼",koala:"🐨",tiger:"🐅",lion:"🦁",elephant:"🐘",monkey:"🐒",
+  chicken:"🐔",penguin:"🐧",frog:"🐸",snake:"🐍",whale:"🐋",dolphin:"🐬",shark:"🦈",
+  octopus:"🐙",butterfly:"🦋",bee:"🐝",turtle:"🐢",crab:"🦀",dragon:"🐉",wolf:"🐺",
+  deer:"🦌",owl:"🦉",bat:"🦇",duck:"🦆",eagle:"🦅",swan:"🦢",peacock:"🦚",parrot:"🦜",
+  flamingo:"🦩",squid:"🦑",shrimp:"🦐",lobster:"🦞",snail:"🐌",goat:"🐐",sheep:"🐑",
+  camel:"🐪",giraffe:"🦒",zebra:"🦓",kangaroo:"🦘",hippo:"🦛",rhino:"🦏",gorilla:"🦍",
+  sloth:"🦥",otter:"🦦",dinosaur:"🦖",unicorn:"🦄",dove:"🕊️",rooster:"🐓",turkey:"🦃",
+  hamster:"🐹",hedgehog:"🦔",
+  apple:"🍎",orange:"🍊",banana:"🍌",grape:"🍇",grapes:"🍇",lemon:"🍋",cherry:"🍒",
+  peach:"🍑",pear:"🍐",pineapple:"🍍",mango:"🥭",strawberry:"🍓",melon:"🍈",
+  watermelon:"🍉",coconut:"🥥",kiwi:"🥝",tomato:"🍅",avocado:"🥑",eggplant:"🍆",
+  potato:"🥔",carrot:"🥕",corn:"🌽",pepper:"🌶️",cucumber:"🥒",broccoli:"🥦",
+  mushroom:"🍄",peanut:"🥜",bread:"🍞",cheese:"🧀",egg:"🥚",bacon:"🥓",pizza:"🍕",
+  burger:"🍔",fries:"🍟",hotdog:"🌭",taco:"🌮",sushi:"🍣",ramen:"🍜",cake:"🍰",
+  cookie:"🍪",donut:"🍩",candy:"🍬",chocolate:"🍫",popcorn:"🍿",coffee:"☕",tea:"🍵",
+  milk:"🥛",beer:"🍺",wine:"🍷",
+  sun:"☀️",moon:"🌙",star:"⭐",stars:"⭐",cloud:"☁️",rain:"🌧️",snow:"❄️",fire:"🔥",
+  flame:"🔥",water:"💧",wave:"🌊",ocean:"🌊",sea:"🌊",tree:"🌳",forest:"🌲",palm:"🌴",
+  cactus:"🌵",flower:"🌸",rose:"🌹",sunflower:"🌻",tulip:"🌷",leaf:"🍁",mountain:"⛰️",
+  volcano:"🌋",earth:"🌍",world:"🌍",globe:"🌍",planet:"🪐",rainbow:"🌈",lightning:"⚡",
+  thunder:"⚡",tornado:"🌪️",comet:"☄️",plant:"🌱",clover:"🍀",
+  car:"🚗",taxi:"🚕",bus:"🚌",truck:"🚚",tractor:"🚜",train:"🚂",plane:"✈️",
+  airplane:"✈️",rocket:"🚀",ship:"🚢",boat:"⛵",bike:"🚲",bicycle:"🚲",
+  motorcycle:"🏍️",helicopter:"🚁",anchor:"⚓",house:"🏠",home:"🏠",castle:"🏰",
+  church:"⛪",tent:"⛺",factory:"🏭",bridge:"🌉",tower:"🗼",statue:"🗽",
+  key:"🔑",lock:"🔒",book:"📖",books:"📚",phone:"📱",telephone:"☎️",computer:"💻",
+  laptop:"💻",robot:"🤖",clock:"🕐",watch:"⌚",hourglass:"⏳",money:"💰",dollar:"💵",
+  coin:"🪙",gift:"🎁",balloon:"🎈",kite:"🪁",music:"🎵",note:"🎵",guitar:"🎸",
+  piano:"🎹",violin:"🎻",trumpet:"🎺",drum:"🥁",microphone:"🎤",bell:"🔔",camera:"📷",
+  television:"📺",candle:"🕯️",bulb:"💡",light:"💡",idea:"💡",umbrella:"☂️",
+  glasses:"👓",crown:"👑",king:"👑",queen:"👑",ring:"💍",diamond:"💎",gem:"💎",
+  sword:"🗡️",shield:"🛡️",hammer:"🔨",wrench:"🔧",scissors:"✂️",pencil:"✏️",pen:"🖊️",
+  paint:"🎨",art:"🎨",magnet:"🧲",telescope:"🔭",microscope:"🔬",pill:"💊",soap:"🧼",
+  broom:"🧹",box:"📦",package:"📦",mail:"✉️",letter:"✉️",map:"🗺️",compass:"🧭",
+  soccer:"⚽",football:"🏈",basketball:"🏀",baseball:"⚾",tennis:"🎾",volleyball:"🏐",
+  rugby:"🏉",golf:"⛳",bowling:"🎳",dart:"🎯",target:"🎯",trophy:"🏆",medal:"🏅",
+  dice:"🎲",chess:"♟️",puzzle:"🧩",gamepad:"🎮",
+  heart:"❤️",love:"❤️",brain:"🧠",mind:"🧠",eye:"👁️",eyes:"👀",ear:"👂",nose:"👃",
+  mouth:"👄",lips:"👄",tongue:"👅",tooth:"🦷",bone:"🦴",hand:"✋",fist:"✊",foot:"🦶",
+  muscle:"💪",skull:"💀",death:"💀",ghost:"👻",alien:"👽",clown:"🤡",baby:"👶",
+  zombie:"🧟",wizard:"🧙",mermaid:"🧜",fairy:"🧚",santa:"🎅",kiss:"💋",
+  hat:"🎩",shirt:"👕",dress:"👗",shoe:"👟",boot:"👢",sock:"🧦",scarf:"🧣",glove:"🧤",
+  bag:"👜",backpack:"🎒",necktie:"👔",
+  night:"🌙",morning:"🌅",sunrise:"🌅",sunset:"🌇",spring:"🌸",summer:"☀️",
+  autumn:"🍁",fall:"🍁",winter:"❄️",christmas:"🎄",halloween:"🎃",pumpkin:"🎃",
+  party:"🎉",birthday:"🎂",sleep:"💤",dream:"💤",
+  france:"🥖",paris:"🗼",japan:"🗻",italy:"🍕",egypt:"🐪",
+  warning:"⚠️",danger:"⚠️",infinity:"♾️",peace:"☮️",atom:"⚛️",dna:"🧬",virus:"🦠",
+  magic:"✨",sparkle:"✨",bomb:"💣",crystal:"🔮",feather:"🪶",web:"🕸️",net:"🕸️",
+};
+const emojiFor = w => EMOJI[w] || (w.endsWith("s") ? EMOJI[w.slice(0, -1)] : null) || null;
+
+/* ---------------- canvas ---------------- */
+const stage = document.getElementById("stage");
+const canvas = document.getElementById("mind");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = stage.clientWidth; H = stage.clientHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", resize);
+
+const lerp = (a, b, t) => a + (b - a) * t;
+const SERIF = '"Source Serif 4", Georgia, serif';
+const MONO = '"Cascadia Code", Consolas, monospace';
+function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; }
+
+const RAIL_TOP = 0.10, RAIL_BOT = 0.88;
+let RAILS = [], nLayersG = 32;
+function layoutRails(layers, n) { nLayersG = n; RAILS = layers.map(l => ({ layer: l, frac: l / (n - 1) })); }
+const railY = f => H * lerp(RAIL_TOP, RAIL_BOT, f);
+
+/* absolute strength mapping — a weak thought LOOKS weak (honest display) */
+const strength = p => Math.min(1, Math.pow(p, 0.45) * 1.05);
+
+/* ---------------- calligram ---------------- */
+function buildCalligram(word, emoji) {
+  const S = 420, off = document.createElement("canvas");
+  off.width = S; off.height = S;
+  const c = off.getContext("2d", { willReadFrequently: true });
+  c.font = '340px "Segoe UI Emoji", sans-serif';
+  c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillText(emoji, S / 2, S / 2 + 20);
+  const img = c.getImageData(0, 0, S, S).data;
+  const CELL = 3, GW = Math.ceil(S / CELL);
+  const mask = new Uint8Array(GW * GW), occ = new Uint8Array(GW * GW);
+  let count = 0;
+  for (let gy = 0; gy < GW; gy++) for (let gx = 0; gx < GW; gx++)
+    if (img[((gy * CELL + 1) * S + gx * CELL + 1) * 4 + 3] > 100) { mask[gy * GW + gx] = 1; count++; }
+  if (count < 400) return null;
+  const placements = [];
+  const fits = (x0, y0, w, h) => {
+    if (x0 < 0 || y0 < 0 || x0 + w >= S || y0 + h >= S) return false;
+    for (let y = y0; y <= y0 + h; y += CELL) for (let x = x0; x <= x0 + w; x += CELL) {
+      const i = ((y / CELL) | 0) * GW + ((x / CELL) | 0);
+      if (!mask[i] || occ[i]) return false;
+    }
+    return true;
+  };
+  const mark = (x0, y0, w, h) => {
+    for (let y = y0; y <= y0 + h; y += CELL) for (let x = x0; x <= x0 + w; x += CELL)
+      occ[((y / CELL) | 0) * GW + ((x / CELL) | 0)] = 1;
+  };
+  for (const size of [36, 30, 25, 21, 17, 14, 11, 9]) {
+    c.font = `italic ${size}px ${SERIF}`;
+    const w = c.measureText(word).width, h = size * 0.72;
+    for (let t = 0, T = size > 20 ? 220 : 420; t < T; t++) {
+      const x = (Math.random() * (S - w)) | 0, y = (Math.random() * (S - h)) | 0;
+      if (fits(x, y, w, h)) { placements.push({ x: x + w / 2, y: y + h / 2, size, a: .45 + Math.random() * .55 }); mark(x, y, w, h); }
+    }
+  }
+  return placements.length > 25 ? { placements, S } : null;
+}
+
+/* ---------------- field ---------------- */
+const MAX_VISIBLE = 10;
+const field = {
+  thoughts: new Map(), pulses: [],
+  dominant: { word: null, run: 0 }, lastCalligram: new Map(),
+  totalSeen: 0, selected: null, hovered: null,
+
+  applyFrame(f) {
+    for (const t of this.thoughts.values()) t.target *= 0.78;
+    for (const th of f.thoughts) {
+      if (th.w.length < 3) continue;
+      const v = strength(th.p);
+      if (v < 0.14) continue;
+      let t = this.thoughts.get(th.w);
+      if (!t) {
+        this.totalSeen++;
+        t = { word: th.w, s: 0, target: 0, depth: th.d, prof: [],
+              x: W * (0.14 + 0.72 * hash(th.w)), seed: hash(th.w + "~") * 1000,
+              peak: 0, frames: 0, hist: [], phase: f.phase,
+              calligram: null, calligramAlpha: 0 };
+        this.thoughts.set(th.w, t);
+      }
+      if (v - t.target > 0.35 && v > 0.55)
+        this.pulses.push({ x: t.x, y: railY(t.depth), r: 8, a: .4 });
+      t.target = Math.max(t.target, v);
+      t.depth = lerp(t.depth, th.d, 0.35);
+      t.prof = th.prof || [];
+      t.peak = Math.max(t.peak, v); t.frames++; t.phase = f.phase;
+    }
+    // keep only the strongest MAX_VISIBLE alive
+    const all = [...this.thoughts.values()].sort((a, b) => b.target - a.target);
+    for (let i = MAX_VISIBLE; i < all.length; i++) all[i].target = 0;
+    for (const t of all) { t.hist.push(t.target); if (t.hist.length > 90) t.hist.shift(); }
+
+    const top = all[0];
+    if (top && top.target > 0.6 && emojiFor(top.word)) {
+      this.dominant = top.word === this.dominant.word
+        ? { word: top.word, run: this.dominant.run + 1 } : { word: top.word, run: 1 };
+      if (this.dominant.run >= 5 && !top.calligram &&
+          Date.now() - (this.lastCalligram.get(top.word) || 0) > 25000) {
+        top.calligram = buildCalligram(top.word, emojiFor(top.word));
+        this.lastCalligram.set(top.word, Date.now());
+      }
+    } else this.dominant = { word: null, run: 0 };
+  },
+
+  /* relaxation: push overlapping words apart along their rails */
+  relax(list) {
+    for (let k = 0; k < 4; k++) for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+      const a = list[i], b = list[j];
+      const ay = railY(a.depth), by = railY(b.depth);
+      const vh = (a.size + b.size) * 0.58;
+      if (Math.abs(ay - by) > vh) continue;
+      const need = (a.w + b.w) / 2 + 26;
+      const dx = b.x - a.x;
+      if (Math.abs(dx) < need) {
+        const push = (need - Math.abs(dx)) / 2 * (dx >= 0 ? 1 : -1);
+        a.x -= push * 0.25; b.x += push * 0.25;
+      }
+    }
+    for (const t of list) t.x = Math.max(80, Math.min(W - 50, t.x));
+  },
+
+  render(now) {
+    ctx.clearRect(0, 0, W, H);
+
+    // rails — hairline guides with quiet labels
+    ctx.font = `10px ${MONO}`;
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    for (const r of RAILS) {
+      const y = railY(r.frac);
+      ctx.strokeStyle = "rgba(255,255,255,0.07)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(52, y + .5); ctx.lineTo(W - 20, y + .5); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.22)";
+      ctx.fillText("L" + r.layer, 18, y);
+    }
+    if (RAILS.length) {
+      ctx.fillStyle = "rgba(255,255,255,0.26)";
+      ctx.font = `10px var(--sans), sans-serif`;
+      ctx.font = `10px Inter, sans-serif`;
+      ctx.fillText("perception", 52, railY(RAILS[0].frac) - 12);
+      ctx.fillText("speech", 52, railY(RAILS[RAILS.length - 1].frac) + 13);
+    }
+
+    const list = [...this.thoughts.values()];
+    for (const t of list) {
+      t.s = lerp(t.s, t.target, 0.10);
+      if (t.s < 0.015 && t.target < 0.015) {
+        if (this.selected === t) { this.selected = null; inspectEl.style.display = "none"; }
+        this.thoughts.delete(t.word);
+        continue;
+      }
+      t.size = 13 + Math.pow(t.s, 0.8) * 46;
+      ctx.font = `italic 400 ${t.size.toFixed(1)}px ${SERIF}`;
+      t.w = ctx.measureText(t.word).width;
+      t.calligramAlpha = lerp(t.calligramAlpha, t.calligram && t.s > 0.30 ? 1 : 0, 0.05);
+    }
+    const vis = list.filter(t => t.s >= 0.015).sort((a, b) => a.s - b.s);
+    this.relax(vis);
+
+    // pulses
+    this.pulses = this.pulses.filter(p => p.a > 0.02);
+    for (const p of this.pulses) {
+      p.r += 1.5; p.a *= 0.94;
+      ctx.strokeStyle = `rgba(210,220,245,${p.a.toFixed(3)})`;
+      ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.stroke();
+    }
+
+    // layer trace — only for the hovered/selected word (detail on demand)
+    const focus = this.selected || this.hovered;
+    if (focus && focus.prof.length && focus.s > 0.02) {
+      const accent = focus.phase === "reading" ? "232,161,60" : "108,184,224";
+      const pm = Math.max(...focus.prof.map(e => e[1]), 1e-9);
+      ctx.strokeStyle = `rgba(${accent},0.35)`;
+      ctx.lineWidth = 1; ctx.beginPath();
+      focus.prof.forEach(([l], i) => {
+        const ry = railY(l / (nLayersG - 1));
+        i ? ctx.lineTo(focus.x, ry) : ctx.moveTo(focus.x, ry);
+      });
+      ctx.stroke();
+      for (const [l, p] of focus.prof) {
+        const ry = railY(l / (nLayersG - 1));
+        ctx.fillStyle = `rgba(${accent},${(0.25 + 0.65 * p / pm).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(focus.x, ry, 1.5 + 2.5 * Math.sqrt(p / pm), 0, 7); ctx.fill();
+      }
+    }
+
+    // words
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (const t of vis) {
+      const y = railY(t.depth) + Math.sin(t.seed + now * 0.00035) * 2.5;
+      const d = t.depth;
+      const isFocus = t === this.selected || t === this.hovered;
+      const alpha = Math.min(1, t.s * (0.45 + 0.6 * d) + (isFocus ? 0.25 : 0));
+      const wa = alpha * (1 - t.calligramAlpha);
+      const tint = t.phase === "reading" ? [255, 232, 200] : [225, 240, 252];
+      const cr = Math.round(lerp(tint[0] * .72, tint[0], d)),
+            cg = Math.round(lerp(tint[1] * .72, tint[1], d)),
+            cb = Math.round(lerp(tint[2] * .72, tint[2], d));
+      if (wa > 0.012) {
+        ctx.font = `italic 400 ${t.size.toFixed(1)}px ${SERIF}`;
+        ctx.shadowColor = `rgba(${cr},${cg},${cb},0.55)`;
+        ctx.shadowBlur = 3 + 10 * t.s;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${wa.toFixed(3)})`;
+        ctx.fillText(t.word, t.x, y);
+        ctx.shadowBlur = 0;
+      }
+      if (t.calligram && t.calligramAlpha > 0.02) {
+        const k = (t.size * 3.6) / t.calligram.S;
+        const br = 1 + Math.sin(now * 0.0016 + t.seed) * 0.02;
+        ctx.save(); ctx.translate(t.x, y); ctx.scale(k * br, k * br);
+        ctx.translate(-t.calligram.S / 2, -t.calligram.S / 2);
+        for (const p of t.calligram.placements) {
+          ctx.font = `italic ${p.size}px ${SERIF}`;
+          ctx.fillStyle = `rgba(${cr},${cg},${cb},${(alpha * t.calligramAlpha * p.a).toFixed(3)})`;
+          ctx.fillText(t.word, p.x, p.y);
+        }
+        ctx.restore();
+      }
+      t.hitY = y;
+    }
+  },
+};
+
+/* ---------------- pointer: hover + inspect ---------------- */
+const inspectEl = document.getElementById("inspect");
+const sparkEl = document.getElementById("in-spark");
+function hitTest(mx, my) {
+  let best = null, bd = 1e9;
+  for (const t of field.thoughts.values()) {
+    if (t.s < 0.04 || t.hitY === undefined) continue;
+    if (Math.abs(mx - t.x) < t.w / 2 + 12 && Math.abs(my - t.hitY) < t.size / 2 + 8) {
+      const dd = (mx - t.x) ** 2 + (my - t.hitY) ** 2;
+      if (dd < bd) { bd = dd; best = t; }
+    }
+  }
+  return best;
+}
+canvas.addEventListener("pointermove", e => {
+  field.hovered = hitTest(e.offsetX, e.offsetY);
+  canvas.style.cursor = field.hovered ? "pointer" : "default";
+});
+canvas.addEventListener("click", e => {
+  field.selected = hitTest(e.offsetX, e.offsetY);
+  inspectEl.style.display = field.selected ? "block" : "none";
+});
+document.querySelector("#inspect .x").onclick = () => {
+  field.selected = null; inspectEl.style.display = "none";
+};
+function selectWord(w) {
+  const t = field.thoughts.get(w);
+  if (t) { field.selected = t; inspectEl.style.display = "block"; }
+}
+function renderInspect() {
+  const t = field.selected;
+  if (!t) return;
+  document.getElementById("in-word").textContent = t.word;
+  document.getElementById("in-now").textContent = t.s.toFixed(3);
+  document.getElementById("in-peak").textContent = t.peak.toFixed(3);
+  document.getElementById("in-depth").textContent =
+    `L${Math.round(t.depth * (nLayersG - 1))} of ${nLayersG}`;
+  document.getElementById("in-frames").textContent = t.frames;
+  const c = sparkEl.getContext("2d");
+  c.clearRect(0, 0, sparkEl.width, sparkEl.height);
+  c.strokeStyle = "rgba(255,255,255,.55)"; c.lineWidth = 1; c.beginPath();
+  t.hist.forEach((v, i) => {
+    const x = i / 89 * sparkEl.width, y = sparkEl.height - 3 - v * (sparkEl.height - 6);
+    i ? c.lineTo(x, y) : c.moveTo(x, y);
+  });
+  c.stroke();
+}
+
+/* ---------------- console ---------------- */
+const log = document.getElementById("log"), inp = document.getElementById("inp"),
+      send = document.getElementById("send"), phaseWrap = document.getElementById("phase"),
+      phaseText = document.getElementById("phasetext"), conn = document.getElementById("conn"),
+      ledger = document.getElementById("ledger"), tmRows = document.getElementById("tm-rows");
+const history = [];
+let busy = false, botBody = null, userSpans = null, readPtr = 0;
+let nRead = 0, nSaid = 0, tpsWindow = [];
+
+function addMsg(role, text) {
+  const m = document.createElement("div"); m.className = "msg " + role;
+  const who = document.createElement("div"); who.className = "who";
+  who.textContent = role === "user" ? "you" : "model";
+  const body = document.createElement("div"); body.className = "body";
+  if (role === "user") {
+    userSpans = []; readPtr = 0;
+    for (const ch of text) {
+      const s = document.createElement("span"); s.textContent = ch;
+      body.appendChild(s); userSpans.push(s);
+    }
+  } else body.textContent = text;
+  m.append(who, body); log.appendChild(m); log.scrollTop = log.scrollHeight;
+  return body;
+}
+const setPhase = p => { phaseText.textContent = p; phaseWrap.className = p === "idle" ? "" : p; };
+const stat = (id, v) => document.getElementById(id).textContent = v;
+
+function ledgerRow(f) {
+  const r = document.createElement("div"); r.className = "lg-row " + f.phase;
+  const ph = document.createElement("span"); ph.className = "ph";
+  const tk = document.createElement("span"); tk.className = "tk";
+  tk.textContent = JSON.stringify(f.phase === "reading" ? f.tok : f.out).slice(1, -1) || "·";
+  const th = document.createElement("span"); th.className = "th";
+  for (const t of f.thoughts.slice(0, 3)) {
+    const el = document.createElement("span"); el.className = "t";
+    const word = document.createElement("span"); word.textContent = t.w;
+    const bar = document.createElement("i"); const fill = document.createElement("b");
+    fill.style.width = (strength(t.p) * 100).toFixed(0) + "%";
+    bar.appendChild(fill); el.append(word, bar); th.appendChild(el);
+  }
+  r.append(ph, tk, th);
+  const stick = ledger.scrollTop + ledger.clientHeight > ledger.scrollHeight - 40;
+  ledger.appendChild(r);
+  while (ledger.children.length > 220) ledger.firstChild.remove();
+  if (stick) ledger.scrollTop = ledger.scrollHeight;
+}
+
+function renderTopMind() {
+  const top = [...field.thoughts.values()].filter(t => t.s > 0.04)
+    .sort((a, b) => b.s - a.s).slice(0, 7);
+  tmRows.innerHTML = "";
+  for (const t of top) {
+    const r = document.createElement("div"); r.className = "tm-row";
+    const w = document.createElement("span"); w.className = "w"; w.textContent = t.word;
+    w.onclick = () => selectWord(t.word);
+    const bar = document.createElement("span"); bar.className = "bar";
+    const fill = document.createElement("i"); fill.style.width = (t.s * 100).toFixed(0) + "%";
+    bar.appendChild(fill);
+    const d = document.createElement("span"); d.className = "d";
+    d.textContent = "L" + Math.round(t.depth * (nLayersG - 1));
+    r.append(w, bar, d); tmRows.appendChild(r);
+  }
+  stat("s-thoughts", field.totalSeen);
+}
+
+/* ---------------- pacing ---------------- */
+const queue = [];
+let playTimer = null;
+function pump() {
+  if (playTimer) return;
+  const step = () => {
+    const f = queue.shift();
+    if (!f) { playTimer = null; return; }
+    playFrame(f);
+    playTimer = setTimeout(step, f.phase === "reading" ? 90 : 60);
+  };
+  playTimer = setTimeout(step, 0);
+}
+function playFrame(f) {
+  if (f.type === "done") {
+    if (botBody) botBody.textContent = f.text;
+    history.push({ role: "assistant", content: f.text });
+    busy = false; send.disabled = false; botBody = null;
+    setPhase("idle"); renderTopMind(); inp.focus();
+    return;
+  }
+  setPhase(f.phase);
+  field.applyFrame(f);
+  ledgerRow(f);
+  renderTopMind();
+  tpsWindow.push(performance.now());
+  tpsWindow = tpsWindow.filter(t => performance.now() - t < 3000);
+  stat("s-tps", (tpsWindow.length / 3).toFixed(1));
+  if (f.phase === "reading") {
+    nRead++; stat("s-read", nRead);
+    if (userSpans && readPtr < userSpans.length) {
+      const rest = userSpans.slice(readPtr).map(s => s.textContent).join("");
+      let tok = f.tok || "";
+      if (!rest.startsWith(tok)) tok = tok.replace(/^\s+/, "");
+      if (tok && rest.startsWith(tok))
+        for (let i = 0; i < tok.length; i++, readPtr++)
+          userSpans[readPtr].classList.add("read");
+    }
+  }
+  if (f.phase === "thinking" && f.out) {
+    nSaid++; stat("s-said", nSaid);
+    if (!botBody) botBody = addMsg("bot", "");
+    botBody.textContent += f.out;
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+/* ---------------- websocket / replay ---------------- */
+let ws;
+const WS_URL = location.protocol === "file:" || !location.host
+  ? "ws://127.0.0.1:8765/ws" : `ws://${location.host}/ws`;
+const REPLAY = new URLSearchParams(location.search).get("replay")
+  || (location.host.endsWith("github.io") ? "demo_session.json" : null);
+const recorded = [];
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => { conn.textContent = "…"; };
+  ws.onclose = () => { conn.textContent = "reconnecting…"; setTimeout(connect, 1500); };
+  ws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    recorded.push(m);
+    if (m.type === "hello") {
+      layoutRails(m.layers, m.n_layers);
+      conn.textContent = `${m.model} · ${m.layers.length} lens layers`;
+      return;
+    }
+    queue.push(m); pump();
+  };
+}
+function submit(text) {
+  if (busy || !text.trim() || !ws || ws.readyState !== 1) return;
+  busy = true; send.disabled = true;
+  addMsg("user", text);
+  history.push({ role: "user", content: text });
+  recorded.push({ type: "user", text });
+  ws.send(JSON.stringify({ type: "chat", messages: history }));
+  inp.value = "";
+}
+send.onclick = () => submit(inp.value);
+inp.addEventListener("keydown", e => { if (e.key === "Enter") submit(inp.value); });
+document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => submit(c.textContent)));
+
+document.getElementById("export").onclick = () => {
+  if (!recorded.some(m => m.type === "frame")) { alert("nothing recorded yet — have a conversation first"); return; }
+  const blob = new Blob([JSON.stringify(recorded)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "session.json"; a.click();
+};
+
+/* replay: play back an exported session with live pacing, then loop */
+function resetAll() {
+  log.innerHTML = ""; history.length = 0; botBody = null; userSpans = null; readPtr = 0;
+  nRead = 0; nSaid = 0; field.thoughts.clear(); field.totalSeen = 0;
+  field.selected = null; field.hovered = null; inspectEl.style.display = "none";
+  ledger.innerHTML = ""; tmRows.innerHTML = "";
+  stat("s-read", 0); stat("s-said", 0); stat("s-thoughts", 0);
+}
+async function startReplay(url) {
+  conn.textContent = "loading replay…";
+  inp.disabled = true; inp.placeholder = "this is a replay — clone the repo to run it live";
+  send.disabled = true;
+  document.getElementById("export").style.display = "none";
+  document.getElementById("chips").style.display = "none";
+  let events;
+  try { events = await (await fetch(url)).json(); }
+  catch { conn.textContent = "replay file not found"; return; }
+  let i = 0;
+  const step = () => {
+    if (i >= events.length) { setTimeout(() => { resetAll(); i = 0; step(); }, 3500); return; }
+    const m = events[i++];
+    if (m.type === "hello") {
+      layoutRails(m.layers, m.n_layers);
+      conn.textContent = `${m.model} · replay`;
+      step();
+    } else if (m.type === "user") {
+      addMsg("user", m.text); setTimeout(step, 900);
+    } else if (m.type === "frame") {
+      playFrame(m); setTimeout(step, m.phase === "reading" ? 90 : 60);
+    } else if (m.type === "done") {
+      playFrame(m); setTimeout(step, 1600);
+    } else step();
+  };
+  step();
+}
+
+/* ---------------- loop ---------------- */
+resize();
+if (REPLAY) startReplay(REPLAY); else connect();
+(function loop(now) {
+  field.render(now || 0);
+  if (field.selected) renderInspect();
+  requestAnimationFrame(loop);
+})(0);
+</script>
+</body>
+</html>

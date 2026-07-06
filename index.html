@@ -145,6 +145,7 @@
   <span class="mark">Subtext</span>
   <span class="sub">the words beneath the words</span>
   <div class="right">
+    <span id="export" style="cursor:pointer" title="download this session as a replay file">⤓ session</span>
     <span id="conn">connecting…</span>
     <div id="phase"><span class="dot"></span><span id="phasetext">idle</span></div>
   </div>
@@ -397,14 +398,14 @@ const field = {
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
     for (const r of RAILS) {
       const y = railY(r.frac);
-      ctx.strokeStyle = "rgba(255,255,255,0.035)";
+      ctx.strokeStyle = "rgba(255,255,255,0.07)";
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(52, y + .5); ctx.lineTo(W - 20, y + .5); ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,0.14)";
+      ctx.fillStyle = "rgba(255,255,255,0.22)";
       ctx.fillText("L" + r.layer, 18, y);
     }
     if (RAILS.length) {
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fillStyle = "rgba(255,255,255,0.26)";
       ctx.font = `10px var(--sans), sans-serif`;
       ctx.font = `10px Inter, sans-serif`;
       ctx.fillText("perception", 52, railY(RAILS[0].frac) - 12);
@@ -651,16 +652,21 @@ function playFrame(f) {
   }
 }
 
-/* ---------------- websocket ---------------- */
+/* ---------------- websocket / replay ---------------- */
 let ws;
 const WS_URL = location.protocol === "file:" || !location.host
   ? "ws://127.0.0.1:8765/ws" : `ws://${location.host}/ws`;
+const REPLAY = new URLSearchParams(location.search).get("replay")
+  || (location.host.endsWith("github.io") ? "demo_session.json" : null);
+const recorded = [];
+
 function connect() {
   ws = new WebSocket(WS_URL);
   ws.onopen = () => { conn.textContent = "…"; };
   ws.onclose = () => { conn.textContent = "reconnecting…"; setTimeout(connect, 1500); };
   ws.onmessage = ev => {
     const m = JSON.parse(ev.data);
+    recorded.push(m);
     if (m.type === "hello") {
       layoutRails(m.layers, m.n_layers);
       conn.textContent = `${m.model} · ${m.layers.length} lens layers`;
@@ -674,6 +680,7 @@ function submit(text) {
   busy = true; send.disabled = true;
   addMsg("user", text);
   history.push({ role: "user", content: text });
+  recorded.push({ type: "user", text });
   ws.send(JSON.stringify({ type: "chat", messages: history }));
   inp.value = "";
 }
@@ -681,8 +688,52 @@ send.onclick = () => submit(inp.value);
 inp.addEventListener("keydown", e => { if (e.key === "Enter") submit(inp.value); });
 document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => submit(c.textContent)));
 
+document.getElementById("export").onclick = () => {
+  if (!recorded.some(m => m.type === "frame")) { alert("nothing recorded yet — have a conversation first"); return; }
+  const blob = new Blob([JSON.stringify(recorded)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "session.json"; a.click();
+};
+
+/* replay: play back an exported session with live pacing, then loop */
+function resetAll() {
+  log.innerHTML = ""; history.length = 0; botBody = null; userSpans = null; readPtr = 0;
+  nRead = 0; nSaid = 0; field.thoughts.clear(); field.totalSeen = 0;
+  field.selected = null; field.hovered = null; inspectEl.style.display = "none";
+  ledger.innerHTML = ""; tmRows.innerHTML = "";
+  stat("s-read", 0); stat("s-said", 0); stat("s-thoughts", 0);
+}
+async function startReplay(url) {
+  conn.textContent = "loading replay…";
+  inp.disabled = true; inp.placeholder = "this is a replay — clone the repo to run it live";
+  send.disabled = true;
+  document.getElementById("export").style.display = "none";
+  document.getElementById("chips").style.display = "none";
+  let events;
+  try { events = await (await fetch(url)).json(); }
+  catch { conn.textContent = "replay file not found"; return; }
+  let i = 0;
+  const step = () => {
+    if (i >= events.length) { setTimeout(() => { resetAll(); i = 0; step(); }, 3500); return; }
+    const m = events[i++];
+    if (m.type === "hello") {
+      layoutRails(m.layers, m.n_layers);
+      conn.textContent = `${m.model} · replay`;
+      step();
+    } else if (m.type === "user") {
+      addMsg("user", m.text); setTimeout(step, 900);
+    } else if (m.type === "frame") {
+      playFrame(m); setTimeout(step, m.phase === "reading" ? 90 : 60);
+    } else if (m.type === "done") {
+      playFrame(m); setTimeout(step, 1600);
+    } else step();
+  };
+  step();
+}
+
 /* ---------------- loop ---------------- */
-resize(); connect();
+resize();
+if (REPLAY) startReplay(REPLAY); else connect();
 (function loop(now) {
   field.render(now || 0);
   if (field.selected) renderInspect();

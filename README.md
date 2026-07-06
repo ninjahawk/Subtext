@@ -12,7 +12,7 @@
 
 ![Subtext demo](media/demo.gif)
 
-**[▶ Full demo video](media/demo.mp4)** · **[📄 The paper this builds on](https://transformer-circuits.pub/2026/workspace/index.html)** · **[🔬 Reference implementation](https://github.com/anthropics/jacobian-lens)**
+**[🌐 Watch a live replay in your browser](https://ninjahawk.github.io/Subtext/)** · **[▶ Demo video](media/demo.mp4)** · **[📄 The paper](https://transformer-circuits.pub/2026/workspace/index.html)** · **[🔬 Reference implementation](https://github.com/anthropics/jacobian-lens)**
 
 </div>
 
@@ -38,11 +38,43 @@ become directly watchable: verdicts form during reading, several tokens before
 any output; planned words hold at high strength while unrelated tokens are
 being emitted; two-hop questions surface their unspoken middle term.
 
-A representative example: given `Is this correct? 12 + 5 = 1`, the workspace
-readout shows *incorrect* active in mid layers while the equation is still
-being read, and given the country-shaped-like-a-boot currency question, *Italy*
-appears at layer 20 and *euros* at layer 26 before generation begins —
-reproducing the two-hop signature reported in the paper.
+Subtext differs from the interactive readouts already available (e.g. the
+Neuronpedia demo) in that it is conversational and continuous: it renders the
+lens during a live chat, includes the reading phase over the user's message,
+streams at generation speed via a KV cache, and pairs the canvas with a
+per-token ledger and per-word inspector. Sessions can be exported and replayed
+in any browser without a GPU.
+
+## What the lens shows that the output does not
+
+The value of the instrument is the gap between the model's internal state and
+its visible text. Three moments from the demo session:
+
+**1. The verdict precedes the reply.** Zero tokens of output exist; the model
+is still reading `Is this correct? 12 + 5 = 1`. The workspace already holds
+*math*, *addition*, *arithmetic*, *modulo* — the phase indicator is amber
+(reading).
+
+![Reading phase: thoughts before any output](media/still_reading.png)
+
+**2. The judgment is formed, then verbalized.** As the reply begins ("No, that
+is **not…"), *incorrect* dominates the workspace at high strength, with
+*equation*, *calculation*, *statement* co-active — the conclusion is
+internally settled several tokens before the words "not correct" appear.
+
+![The verdict forming](media/still_verdict.png)
+
+**3. Plans are held while other words are being said.** Mid-explanation, the
+workspace holds *modulo*, *bitwise*, *system*, *numbers* — the technical
+caveat the model is about to raise — while the current output token is
+unrelated.
+
+![Planning ahead of speech](media/still_planning.png)
+
+These reproduce, on an open 4B model on consumer hardware, the reporting and
+planning phenomena described in the paper (which used Claude-scale models),
+including the two-hop signature: *Italy* at layer 20 and *euros* at layer 26
+on the country-shaped-like-a-boot question, before generation begins.
 
 ## Reading the display
 
@@ -108,6 +140,19 @@ python server.py
 ```
 
 On Windows, run `python -u -X utf8 server.py`, or use `start.bat`.
+
+**Other models.** The server is configured for Qwen3.5-4B because Neuronpedia
+publishes a pre-fitted lens for it (a 27B lens is also published, for larger
+GPUs — edit `MODEL_NAME`/`LENS_FILE` in `server.py`). Any HuggingFace decoder
+can be used by fitting your own lens with `jlens.fit()`; ~100 prompts produces
+a usable lens, and fitting a 4B-scale model takes on the order of an hour on a
+single consumer GPU. See the [reference repo](https://github.com/anthropics/jacobian-lens)
+for details.
+
+**Replays.** The ⤓ session button exports the current conversation — every
+lens frame included — as a JSON file. Open the app with `?replay=<file-url>`
+to play one back with live pacing, no GPU required; that is exactly what the
+[hosted demo](https://ninjahawk.github.io/Subtext/) is.
 
 ## Limitations
 
