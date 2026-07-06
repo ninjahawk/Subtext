@@ -17,7 +17,7 @@
     --serif: "Source Serif 4", Georgia, serif;
   }
   * { box-sizing: border-box; margin: 0; }
-  html, body { height: 100%; overflow: hidden; background: var(--bg); }
+  html, body { height: 100%; height: 100dvh; overflow: hidden; background: var(--bg); }
   body { font: 13px/1.5 var(--sans); color: var(--ink);
          display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
 
@@ -137,6 +137,22 @@
                      background: rgba(255,255,255,.07); border-radius: 1px; position: relative; }
   .lg-row .th .t i b { position: absolute; inset: 0 auto 0 0; border-radius: 1px;
                        background: rgba(255,255,255,.55); }
+
+  /* ---------- mobile: stack canvas above a scrolling console ---------- */
+  @media (max-width: 760px) {
+    #hdr { padding: 12px 14px 0; gap: 10px; }
+    #hdr .sub, #export { display: none; }
+    #main { flex-direction: column; }
+    #stage { flex: none; height: 46dvh; }
+    #foot { display: none; }
+    #console { width: 100%; flex: 1; min-height: 0; overflow-y: auto;
+               border-left: 0; border-top: 1px solid var(--line, rgba(255,255,255,.07)); }
+    #chat { max-height: none; }
+    #log { max-height: 30dvh; }
+    #ledger-wrap { min-height: 200px; }
+    #ledger { max-height: 300px; }
+    #inspect { width: 200px; }
+  }
 </style>
 </head>
 <body>
