@@ -2,15 +2,15 @@
 
 # Subtext
 
+*A real-time instrument for observing the verbal workspace of a language model<br>as it reads, reasons, and speaks.*
+
+![Subtext demo](media/demo.gif)
+
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-CUDA-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Model](https://img.shields.io/badge/Model-Qwen3.5--4B-6cb8e0)](https://huggingface.co/Qwen/Qwen3.5-4B)
 [![Lens](https://img.shields.io/badge/Lens-qwen--n1000-e8a13c)](https://huggingface.co/neuronpedia/jacobian-lens)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green)](LICENSE)
-
-*A real-time instrument for observing the verbal workspace of a language model<br>as it reads, reasons, and speaks.*
-
-![Subtext demo](media/demo.gif)
 
 **[🌐 Watch a live replay in your browser](https://ninjahawk.github.io/Subtext/)** · **[▶ Demo video](media/demo.mp4)** · **[📄 The paper](https://transformer-circuits.pub/2026/workspace/index.html)** · **[🔬 Reference implementation](https://github.com/anthropics/jacobian-lens)**
 
