@@ -1,3 +1,5 @@
+<div align="center">
+
 # Subtext
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -6,11 +8,13 @@
 [![Lens](https://img.shields.io/badge/Lens-qwen--n1000-e8a13c)](https://huggingface.co/neuronpedia/jacobian-lens)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green)](LICENSE)
 
-*A real-time instrument for observing the verbal workspace of a language model as it reads, reasons, and speaks.*
+*A real-time instrument for observing the verbal workspace of a language model<br>as it reads, reasons, and speaks.*
 
 ![Subtext demo](media/demo.gif)
 
 **[▶ Full demo video](media/demo.mp4)** · **[📄 The paper this builds on](https://transformer-circuits.pub/2026/workspace/index.html)** · **[🔬 Reference implementation](https://github.com/anthropics/jacobian-lens)**
+
+</div>
 
 ---
 
