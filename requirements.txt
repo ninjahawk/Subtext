@@ -1,0 +1,7 @@
+torch>=2.5
+transformers>=4.56
+fastapi
+uvicorn[standard]
+websockets
+huggingface_hub
+jlens @ git+https://github.com/anthropics/jacobian-lens
