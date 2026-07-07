@@ -18,6 +18,21 @@
 
 ---
 
+## Getting started & staying tuned with us.
+
+Star us, and you will receive all release notifications from GitHub without any delay!
+
+<a href="https://github.com/ninjahawk/Subtext/stargazers">
+ <picture>
+   <!-- Chart is regenerated daily by .github/workflows/star-history.yml -->
+   <source media="(prefers-color-scheme: dark)" srcset="media/star-history-dark.svg" />
+   <source media="(prefers-color-scheme: light)" srcset="media/star-history.svg" />
+   <img alt="Star History Chart" src="media/star-history.svg" />
+ </picture>
+</a>
+
+---
+
 ## Overview
 
 Recent work from Anthropic identified a small set of internal representations in
@@ -167,19 +182,6 @@ fitted range are not observed. Interpretation should also respect the paper's
 own framing: workspace readouts demonstrate functional availability of
 information for report and reasoning; they do not demonstrate subjective
 experience.
-
-## Star history
-
-Star us, and you will receive all release notifications from GitHub without any delay!
-
-<a href="https://github.com/ninjahawk/Subtext/stargazers">
- <picture>
-   <!-- Chart is regenerated daily by .github/workflows/star-history.yml -->
-   <source media="(prefers-color-scheme: dark)" srcset="media/star-history-dark.svg" />
-   <source media="(prefers-color-scheme: light)" srcset="media/star-history.svg" />
-   <img alt="Star History Chart" src="media/star-history.svg" />
- </picture>
-</a>
 
 ## Acknowledgements
 
