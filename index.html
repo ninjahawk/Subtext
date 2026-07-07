@@ -287,6 +287,11 @@ function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = stage.clientWidth; H = stage.clientHeight;
   canvas.width = W * DPR; canvas.height = H * DPR;
+  // Pin the CSS display size to the stage. A <canvas> is a replaced element,
+  // so inset:0 alone won't stretch it — without this it falls back to its
+  // intrinsic (W*DPR) width and on retina (DPR 2) overhangs the console,
+  // intercepting clicks on the input/Send/chips. See device-pixel-ratio note.
+  canvas.style.width = W + "px"; canvas.style.height = H + "px";
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 }
 window.addEventListener("resize", resize);
