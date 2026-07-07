@@ -20,9 +20,19 @@ LAYERS = [8, 14, 20, 26]
 POSITIONS = [-4, -2, -1]
 TOPK = 5
 
+# Device: CUDA if present, else Apple Silicon (MPS), else CPU.
+if torch.cuda.is_available():
+    DEVICE = "cuda"
+elif torch.backends.mps.is_available():
+    DEVICE = "mps"
+else:
+    DEVICE = "cpu"
+# bf16 matmuls are slow/patchy on CPU; use fp32 there.
+DTYPE = torch.bfloat16 if DEVICE != "cpu" else torch.float32
+
 print("loading model + lens ...")
 hf = transformers.AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME, dtype=torch.bfloat16).cuda()
+    MODEL_NAME, dtype=DTYPE).to(DEVICE)
 tok = transformers.AutoTokenizer.from_pretrained(MODEL_NAME)
 model = jlens.from_hf(hf, tok)
 lens = jlens.JacobianLens.from_pretrained(
