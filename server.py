@@ -35,10 +35,20 @@ MAX_WORDS_PER_FRAME = 14
 # the middle (the workspace), one near the end (about to speak).
 LAYER_FRACS = [0.12, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.93]
 
-print(f"[subtext] loading {MODEL_NAME} (bf16, cuda) ...")
+# Device: CUDA if present, else Apple Silicon (MPS), else CPU.
+if torch.cuda.is_available():
+    DEVICE = "cuda"
+elif torch.backends.mps.is_available():
+    DEVICE = "mps"
+else:
+    DEVICE = "cpu"
+# bf16 matmuls are slow/patchy on CPU; use fp32 there.
+DTYPE = torch.bfloat16 if DEVICE != "cpu" else torch.float32
+
+print(f"[subtext] loading {MODEL_NAME} ({'bf16' if DTYPE == torch.bfloat16 else 'fp32'}, {DEVICE}) ...")
 hf_model = transformers.AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME, dtype=torch.bfloat16
-).cuda()
+    MODEL_NAME, dtype=DTYPE
+).to(DEVICE)
 tokenizer = transformers.AutoTokenizer.from_pretrained(MODEL_NAME)
 model = jlens.from_hf(hf_model, tokenizer)
 
@@ -55,14 +65,14 @@ LAYER_DEPTH = {l: l / (n_layers - 1) for l in VIZ_LAYERS}
 print(f"[subtext] reading layers {VIZ_LAYERS} of {n_layers}")
 
 # Keep only the layers we use, resident on the GPU (transport is then free).
-lens.jacobians = {l: lens.jacobians[l].cuda() for l in VIZ_LAYERS}
+lens.jacobians = {l: lens.jacobians[l].to(DEVICE) for l in VIZ_LAYERS}
 
 # Display mask: word-like tokens only (the paper's own filter), further
 # restricted to ASCII so the stream reads in English.
 _mask_path = HERE / "token_mask.pt"
 vocab_size = hf_model.get_output_embeddings().weight.shape[0]
 if _mask_path.exists():
-    display_mask = torch.load(_mask_path, weights_only=True).cuda()
+    display_mask = torch.load(_mask_path, weights_only=True).to(DEVICE)
 else:
     print("[subtext] building word-like token mask (one-time, ~1 min) ...")
     display_mask = _meaningful_token_mask(tokenizer, vocab_size, torch.device("cpu"))
@@ -76,7 +86,7 @@ else:
                 and re.match(r"^[A-Za-z][A-Za-z'\-]+$", s) and len(s) > 2):
             display_mask[tid] = False
     torch.save(display_mask, _mask_path)
-    display_mask = display_mask.cuda()
+    display_mask = display_mask.to(DEVICE)
 print(f"[subtext] display vocabulary: {int(display_mask.sum())} word tokens")
 
 

@@ -127,9 +127,12 @@ re-run at any time with the server stopped.
 
 ## Setup
 
-Requirements: an NVIDIA GPU with ~10 GB of VRAM, Python 3.11+, and a CUDA
-build of PyTorch. First launch downloads the model and lens (~9 GB total) and
-builds a display-token mask (~1 minute, cached).
+Requirements: an NVIDIA GPU with ~10 GB of VRAM (and a CUDA build of PyTorch),
+or an Apple Silicon Mac with 16 GB+ unified memory (PyTorch ≥ 2.3, macOS 14+;
+runs on the `mps` device), plus Python 3.11+. Without either, the server falls
+back to CPU (slow, but usable for smoke tests). The device is picked
+automatically at startup. First launch downloads the model and lens (~9 GB
+total) and builds a display-token mask (~1 minute, cached).
 
 ```bash
 git clone https://github.com/ninjahawk/Subtext
