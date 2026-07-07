@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="533" viewBox="0 0 800 533" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="800" height="533" fill="#ffffff" rx="8"/>
+<text x="400.0" y="38" text-anchor="middle" fill="#24292f" font-size="22" font-weight="600">Star History — ninjahawk/Subtext</text>
+<line x1="70" y1="473.0" x2="760" y2="473.0" stroke="#d0d7de" stroke-width="1"/>
+<text x="60" y="477.0" text-anchor="end" fill="#24292f" font-size="13">0</text>
+<line x1="70" y1="392.4" x2="760" y2="392.4" stroke="#d0d7de" stroke-width="1"/>
+<text x="60" y="396.4" text-anchor="end" fill="#24292f" font-size="13">10</text>
+<line x1="70" y1="311.8" x2="760" y2="311.8" stroke="#d0d7de" stroke-width="1"/>
+<text x="60" y="315.8" text-anchor="end" fill="#24292f" font-size="13">20</text>
+<line x1="70" y1="231.2" x2="760" y2="231.2" stroke="#d0d7de" stroke-width="1"/>
+<text x="60" y="235.2" text-anchor="end" fill="#24292f" font-size="13">30</text>
+<line x1="70" y1="150.6" x2="760" y2="150.6" stroke="#d0d7de" stroke-width="1"/>
+<text x="60" y="154.6" text-anchor="end" fill="#24292f" font-size="13">40</text>
+<line x1="70" y1="70.0" x2="760" y2="70.0" stroke="#d0d7de" stroke-width="1"/>
+<text x="60" y="74.0" text-anchor="end" fill="#24292f" font-size="13">50</text>
+<text x="70.0" y="497" text-anchor="middle" fill="#24292f" font-size="13">Jul 06</text>
+<text x="242.5" y="497" text-anchor="middle" fill="#24292f" font-size="13">Jul 07</text>
+<text x="415.0" y="497" text-anchor="middle" fill="#24292f" font-size="13">Jul 07</text>
+<text x="587.5" y="497" text-anchor="middle" fill="#24292f" font-size="13">Jul 07</text>
+<text x="760.0" y="497" text-anchor="middle" fill="#24292f" font-size="13">Jul 07</text>
+<path d="M70.0,464.9 L95.5,456.9 L127.9,448.8 L163.5,440.8 L172.8,432.7 L245.1,424.6 L266.1,416.6 L270.5,408.5 L288.5,400.5 L291.5,392.4 L292.5,384.3 L318.9,376.3 L323.4,368.2 L328.1,360.2 L349.0,352.1 L355.3,344.0 L358.9,336.0 L375.7,327.9 L391.6,319.9 L397.1,311.8 L405.9,303.7 L408.4,295.7 L417.4,287.6 L426.9,279.6 L433.2,271.5 L436.9,263.4 L439.8,255.4 L458.1,247.3 L462.6,239.3 L481.7,231.2 L497.1,223.1 L498.9,215.1 L511.9,207.0 L528.1,199.0 L543.0,190.9 L549.5,182.8 L554.7,174.8 L582.2,166.7 L597.2,158.7 L608.3,150.6 L634.9,142.5 L714.7,134.5 L730.7,126.4 L735.0,118.4 L760.0,118.4" fill="none" stroke="#e8a13c" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="70.0" cy="464.9" r="3" fill="#e8a13c"/>
+<circle cx="95.5" cy="456.9" r="3" fill="#e8a13c"/>
+<circle cx="127.9" cy="448.8" r="3" fill="#e8a13c"/>
+<circle cx="163.5" cy="440.8" r="3" fill="#e8a13c"/>
+<circle cx="172.8" cy="432.7" r="3" fill="#e8a13c"/>
+<circle cx="245.1" cy="424.6" r="3" fill="#e8a13c"/>
+<circle cx="266.1" cy="416.6" r="3" fill="#e8a13c"/>
+<circle cx="270.5" cy="408.5" r="3" fill="#e8a13c"/>
+<circle cx="288.5" cy="400.5" r="3" fill="#e8a13c"/>
+<circle cx="291.5" cy="392.4" r="3" fill="#e8a13c"/>
+<circle cx="292.5" cy="384.3" r="3" fill="#e8a13c"/>
+<circle cx="318.9" cy="376.3" r="3" fill="#e8a13c"/>
+<circle cx="323.4" cy="368.2" r="3" fill="#e8a13c"/>
+<circle cx="328.1" cy="360.2" r="3" fill="#e8a13c"/>
+<circle cx="349.0" cy="352.1" r="3" fill="#e8a13c"/>
+<circle cx="355.3" cy="344.0" r="3" fill="#e8a13c"/>
+<circle cx="358.9" cy="336.0" r="3" fill="#e8a13c"/>
+<circle cx="375.7" cy="327.9" r="3" fill="#e8a13c"/>
+<circle cx="391.6" cy="319.9" r="3" fill="#e8a13c"/>
+<circle cx="397.1" cy="311.8" r="3" fill="#e8a13c"/>
+<circle cx="405.9" cy="303.7" r="3" fill="#e8a13c"/>
+<circle cx="408.4" cy="295.7" r="3" fill="#e8a13c"/>
+<circle cx="417.4" cy="287.6" r="3" fill="#e8a13c"/>
+<circle cx="426.9" cy="279.6" r="3" fill="#e8a13c"/>
+<circle cx="433.2" cy="271.5" r="3" fill="#e8a13c"/>
+<circle cx="436.9" cy="263.4" r="3" fill="#e8a13c"/>
+<circle cx="439.8" cy="255.4" r="3" fill="#e8a13c"/>
+<circle cx="458.1" cy="247.3" r="3" fill="#e8a13c"/>
+<circle cx="462.6" cy="239.3" r="3" fill="#e8a13c"/>
+<circle cx="481.7" cy="231.2" r="3" fill="#e8a13c"/>
+<circle cx="497.1" cy="223.1" r="3" fill="#e8a13c"/>
+<circle cx="498.9" cy="215.1" r="3" fill="#e8a13c"/>
+<circle cx="511.9" cy="207.0" r="3" fill="#e8a13c"/>
+<circle cx="528.1" cy="199.0" r="3" fill="#e8a13c"/>
+<circle cx="543.0" cy="190.9" r="3" fill="#e8a13c"/>
+<circle cx="549.5" cy="182.8" r="3" fill="#e8a13c"/>
+<circle cx="554.7" cy="174.8" r="3" fill="#e8a13c"/>
+<circle cx="582.2" cy="166.7" r="3" fill="#e8a13c"/>
+<circle cx="597.2" cy="158.7" r="3" fill="#e8a13c"/>
+<circle cx="608.3" cy="150.6" r="3" fill="#e8a13c"/>
+<circle cx="634.9" cy="142.5" r="3" fill="#e8a13c"/>
+<circle cx="714.7" cy="134.5" r="3" fill="#e8a13c"/>
+<circle cx="730.7" cy="126.4" r="3" fill="#e8a13c"/>
+<circle cx="735.0" cy="118.4" r="3" fill="#e8a13c"/>
+<text x="754.0" y="108.4" text-anchor="end" fill="#24292f" font-size="14" font-weight="600">44 stars</text>
+<text x="760" y="517" text-anchor="end" fill="#d0d7de" font-size="11">updated 2026-07-07 12:11 UTC</text>
+</svg>

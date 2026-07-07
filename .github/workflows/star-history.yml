@@ -1,0 +1,34 @@
+name: Update star history chart
+
+on:
+  schedule:
+    - cron: "17 6 * * *"  # daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate chart
+        env:
+          # Stargazer timestamps are admin-only since June 2026, so the
+          # default github.token may not be enough; STARGAZER_TOKEN is a
+          # fine-grained PAT with Metadata read-only on this repo.
+          GITHUB_TOKEN: ${{ secrets.STARGAZER_TOKEN || github.token }}
+          REPO: ${{ github.repository }}
+          OUT_DIR: media
+        run: python .github/scripts/star_chart.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add media/star-history.svg media/star-history-dark.svg
+          git diff --cached --quiet && echo "no change" && exit 0
+          git commit -m "Update star history chart"
+          git push
