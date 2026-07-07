@@ -43,9 +43,37 @@
   #main { flex: 1; display: flex; min-height: 0; }
   #stage { position: relative; flex: 1; min-width: 0; }
   #mind { position: absolute; inset: 0; }
-  #foot { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center;
+  #foot { position: absolute; left: 0; right: 0; bottom: 48px; text-align: center;
           font-size: 10.5px; color: var(--faint); user-select: none; pointer-events: none; }
   #foot b { color: var(--dim); font-weight: 500; }
+
+  /* transport / scrubber */
+  #transport { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; z-index: 6;
+               display: flex; align-items: center; gap: 9px; padding: 0 16px;
+               background: linear-gradient(transparent, rgba(8,8,10,.94) 45%); }
+  #transport.hidden { display: none; }
+  #transport button { background: rgba(255,255,255,.06); border: 1px solid var(--hair);
+               color: var(--dim); min-width: 26px; height: 24px; border-radius: 6px;
+               cursor: pointer; font-size: 12px; line-height: 1; padding: 0 6px;
+               transition: color .15s, border-color .15s; }
+  #transport button:hover { color: var(--ink); border-color: rgba(255,255,255,.22); }
+  #t-scrub { flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+             background: rgba(255,255,255,.12); border-radius: 2px; cursor: pointer; margin: 0 2px; }
+  #t-scrub::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px;
+             border-radius: 50%; background: var(--ink); cursor: pointer; }
+  #t-scrub::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%;
+             background: var(--ink); cursor: pointer; }
+  #t-read { font: 10px var(--mono); color: var(--dim); white-space: nowrap; text-align: right;
+            font-feature-settings: "tnum"; min-width: 92px; max-width: 220px;
+            overflow: hidden; text-overflow: ellipsis; }
+  #t-live { font: 600 9px var(--sans); letter-spacing: .06em; text-transform: uppercase;
+            color: var(--faint); border-radius: 999px; padding: 0 9px; height: 22px; }
+  #t-live.on { color: #fff; border-color: var(--think); }
+  #t-speed { background: rgba(255,255,255,.06); border: 1px solid var(--hair); color: var(--dim);
+             border-radius: 6px; font: 10px var(--sans); padding: 3px 4px; cursor: pointer; }
+  .lg-row { cursor: pointer; }
+  .lg-row:hover { background: rgba(255,255,255,.035); }
+  .lg-row.cur { background: rgba(255,255,255,.09); }
 
   /* inspector */
   #inspect { position: absolute; top: 16px; left: 16px; width: 240px; display: none;
@@ -151,6 +179,7 @@
     #log { max-height: 30dvh; }
     #ledger-wrap { min-height: 200px; }
     #ledger { max-height: 300px; }
+    #t-read, #t-speed { display: none; }   /* transport: keep buttons + scrubber only */
     #inspect { width: 200px; }
   }
 </style>
@@ -183,6 +212,22 @@
       thoughts sink toward speech · <b>size</b> = strength ·
       <b style="color:var(--read)">amber</b> = while reading you ·
       <b style="color:var(--think)">blue</b> = while replying · hover a word for its layer trace
+    </div>
+    <div id="transport" class="hidden">
+      <button id="t-start" title="jump to start">⏮</button>
+      <button id="t-prev" title="step back one token">‹</button>
+      <button id="t-play" title="play / pause">▶</button>
+      <button id="t-next" title="step forward one token">›</button>
+      <input id="t-scrub" type="range" min="0" max="0" value="0" step="1"
+             title="scrub through the response">
+      <span id="t-read">tok 0 / 0</span>
+      <button id="t-live" title="jump to the live edge">● live</button>
+      <select id="t-speed" title="playback speed">
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+      </select>
     </div>
   </div>
 
@@ -370,7 +415,7 @@ const field = {
               calligram: null, calligramAlpha: 0 };
         this.thoughts.set(th.w, t);
       }
-      if (v - t.target > 0.35 && v > 0.55)
+      if (!rebuilding && v - t.target > 0.35 && v > 0.55)
         this.pulses.push({ x: t.x, y: railY(t.depth), r: 8, a: .4 });
       t.target = Math.max(t.target, v);
       t.depth = lerp(t.depth, th.d, 0.35);
@@ -383,15 +428,17 @@ const field = {
     for (const t of all) { t.hist.push(t.target); if (t.hist.length > 90) t.hist.shift(); }
 
     const top = all[0];
-    if (top && top.target > 0.6 && emojiFor(top.word)) {
-      this.dominant = top.word === this.dominant.word
-        ? { word: top.word, run: this.dominant.run + 1 } : { word: top.word, run: 1 };
-      if (this.dominant.run >= 5 && !top.calligram &&
-          Date.now() - (this.lastCalligram.get(top.word) || 0) > 25000) {
-        top.calligram = buildCalligram(top.word, emojiFor(top.word));
-        this.lastCalligram.set(top.word, Date.now());
-      }
-    } else this.dominant = { word: null, run: 0 };
+    if (!rebuilding) {
+      if (top && top.target > 0.6 && emojiFor(top.word)) {
+        this.dominant = top.word === this.dominant.word
+          ? { word: top.word, run: this.dominant.run + 1 } : { word: top.word, run: 1 };
+        if (this.dominant.run >= 5 && !top.calligram &&
+            Date.now() - (this.lastCalligram.get(top.word) || 0) > 25000) {
+          top.calligram = buildCalligram(top.word, emojiFor(top.word));
+          this.lastCalligram.set(top.word, Date.now());
+        }
+      } else this.dominant = { word: null, run: 0 };
+    }
   },
 
   /* relaxation: push overlapping words apart along their rails */
@@ -588,8 +635,9 @@ function addMsg(role, text) {
 const setPhase = p => { phaseText.textContent = p; phaseWrap.className = p === "idle" ? "" : p; };
 const stat = (id, v) => document.getElementById(id).textContent = v;
 
-function ledgerRow(f) {
+function buildLedgerRow(f, idx) {
   const r = document.createElement("div"); r.className = "lg-row " + f.phase;
+  r.dataset.idx = idx;
   const ph = document.createElement("span"); ph.className = "ph";
   const tk = document.createElement("span"); tk.className = "tk";
   tk.textContent = JSON.stringify(f.phase === "reading" ? f.tok : f.out).slice(1, -1) || "·";
@@ -602,10 +650,9 @@ function ledgerRow(f) {
     bar.appendChild(fill); el.append(word, bar); th.appendChild(el);
   }
   r.append(ph, tk, th);
-  const stick = ledger.scrollTop + ledger.clientHeight > ledger.scrollHeight - 40;
-  ledger.appendChild(r);
-  while (ledger.children.length > 220) ledger.firstChild.remove();
-  if (stick) ledger.scrollTop = ledger.scrollHeight;
+  // click any moment in the log to scrub the whole view to it
+  r.addEventListener("click", () => { pause(); following = false; seekTo(idx); setLiveState(); });
+  return r;
 }
 
 function renderTopMind() {
@@ -626,52 +673,164 @@ function renderTopMind() {
   stat("s-thoughts", field.totalSeen);
 }
 
-/* ---------------- pacing ---------------- */
-const queue = [];
-let playTimer = null;
-function pump() {
-  if (playTimer) return;
-  const step = () => {
-    const f = queue.shift();
-    if (!f) { playTimer = null; return; }
-    playFrame(f);
-    playTimer = setTimeout(step, f.phase === "reading" ? 90 : 60);
-  };
-  playTimer = setTimeout(step, 0);
+/* ---------------- timeline player ----------------
+   Every frame of the current response is captured in `frames[]` so you can
+   pause, step, and scrub to any moment. Live generation plays at the leading
+   edge ("following"); scrubbing reconstructs the exact state at a frame by
+   re-simulating field.applyFrame() from the start (fast, ≤ a few hundred). */
+const frames = [];            // phase frames (reading/thinking) for this response
+const ledgerRows = [];        // ledger DOM rows, index-aligned with frames
+let cursor = -1;              // frame index currently shown
+let playing = false;          // transport playing?
+let following = true;         // cursor rides the live edge as frames arrive
+let speed = 1;                // playback multiplier
+let doneMsg = null;           // the 'done' message once generation finishes
+let tickTimer = null;
+let rebuilding = false;       // true while re-simulating for a scrub (suppress pulses/calligrams)
+
+const tBar = document.getElementById("transport"),
+      tScrub = document.getElementById("t-scrub"),
+      tPlay = document.getElementById("t-play"),
+      tRead = document.getElementById("t-read"),
+      tLive = document.getElementById("t-live");
+
+function setPlayIcon() { tPlay.textContent = playing ? "❚❚" : "▶"; }
+function setLiveState() { tLive.classList.toggle("on", following && cursor >= frames.length - 1); }
+
+function resetViz() {
+  // clear the visualization for a new response — keeps the chat transcript
+  if (botBody && doneMsg) botBody.textContent = doneMsg.text;   // freeze prior bubble at full text
+  clearTimeout(tickTimer); tickTimer = null;
+  frames.length = 0; ledgerRows.length = 0; cursor = -1; doneMsg = null;
+  following = true; playing = false;
+  botBody = null; userSpans = null; readPtr = 0;
+  nRead = 0; nSaid = 0; tpsWindow = [];
+  field.thoughts.clear(); field.totalSeen = 0; field.pulses.length = 0;
+  field.dominant = { word: null, run: 0 };
+  field.selected = null; field.hovered = null; inspectEl.style.display = "none";
+  ledger.innerHTML = ""; tmRows.innerHTML = "";
+  stat("s-read", 0); stat("s-said", 0); stat("s-thoughts", 0); stat("s-tps", "–");
+  tScrub.max = 0; tScrub.value = 0; tRead.textContent = "tok 0 / 0";
+  setPlayIcon(); setLiveState();
 }
-function playFrame(f) {
-  if (f.type === "done") {
-    if (botBody) botBody.textContent = f.text;
-    history.push({ role: "assistant", content: f.text });
-    busy = false; send.disabled = false; botBody = null;
-    setPhase("idle"); renderTopMind(); inp.focus();
-    return;
-  }
+
+function ingestFrame(m, autoplay = true) {
+  const idx = frames.length; frames.push(m);
+  const row = buildLedgerRow(m, idx); ledger.appendChild(row); ledgerRows.push(row);
+  tScrub.max = frames.length - 1;
+  tBar.classList.remove("hidden");
+  if (autoplay && following) { playing = true; setPlayIcon(); ensureTick(); }
+}
+function ingestDone(m) {
+  doneMsg = m;
+  history.push({ role: "assistant", content: m.text });
+  busy = false;
+  if (!REPLAY) { send.disabled = false; inp.focus(); }
+  if (botBody) botBody.textContent = m.text;
+  if (following) setPhase("idle");
+  ensureTick();
+}
+
+function ensureTick() { if (!tickTimer && playing) scheduleTick(); }
+function scheduleTick() {
+  const nxt = frames[cursor + 1];
+  const delay = (nxt ? (nxt.phase === "reading" ? 90 : 60) : 100) / speed;
+  tickTimer = setTimeout(() => {
+    tickTimer = null;
+    if (!playing) return;
+    if (cursor < frames.length - 1) { advanceOne(cursor + 1); scheduleTick(); }
+    else if (doneMsg) { playing = false; setPlayIcon(); setPhase("idle"); }
+    else scheduleTick();            // caught up to live edge — wait for more
+  }, delay);
+}
+
+/* live-forward: apply one new frame with animation intact */
+function advanceOne(i) {
+  cursor = i; const f = frames[i];
   setPhase(f.phase);
   field.applyFrame(f);
-  ledgerRow(f);
+  highlightRow(i);
+  if (f.phase === "reading") { nRead++; stat("s-read", nRead); applyReadHighlight(f); }
+  if (f.phase === "thinking" && f.out) {
+    nSaid++; stat("s-said", nSaid);
+    if (!botBody) botBody = addMsg("bot", "");
+    botBody.textContent += f.out; log.scrollTop = log.scrollHeight;
+  }
   renderTopMind();
   tpsWindow.push(performance.now());
   tpsWindow = tpsWindow.filter(t => performance.now() - t < 3000);
   stat("s-tps", (tpsWindow.length / 3).toFixed(1));
-  if (f.phase === "reading") {
-    nRead++; stat("s-read", nRead);
-    if (userSpans && readPtr < userSpans.length) {
-      const rest = userSpans.slice(readPtr).map(s => s.textContent).join("");
-      let tok = f.tok || "";
-      if (!rest.startsWith(tok)) tok = tok.replace(/^\s+/, "");
-      if (tok && rest.startsWith(tok))
-        for (let i = 0; i < tok.length; i++, readPtr++)
-          userSpans[readPtr].classList.add("read");
-    }
-  }
-  if (f.phase === "thinking" && f.out) {
-    nSaid++; stat("s-said", nSaid);
-    if (!botBody) botBody = addMsg("bot", "");
-    botBody.textContent += f.out;
-    log.scrollTop = log.scrollHeight;
-  }
+  updateReadout(); setLiveState();
 }
+
+/* scrub: reconstruct the full state at frame i from scratch */
+function seekTo(i) {
+  if (!frames.length) return;
+  i = Math.max(0, Math.min(frames.length - 1, i));
+  cursor = i;
+  rebuilding = true;
+  field.thoughts.clear(); field.totalSeen = 0; field.pulses.length = 0;
+  field.dominant = { word: null, run: 0 };
+  for (let k = 0; k <= i; k++) field.applyFrame(frames[k]);
+  rebuilding = false;
+  for (const t of field.thoughts.values()) t.s = t.target;   // snap — frozen frame
+  let r = 0, s = 0, reply = "";
+  for (let k = 0; k <= i; k++) {
+    const f = frames[k];
+    if (f.phase === "reading") r++;
+    if (f.phase === "thinking" && f.out) { s++; reply += f.out; }
+  }
+  nRead = r; nSaid = s; stat("s-read", r); stat("s-said", s); stat("s-tps", "–");
+  if (reply) { if (!botBody) botBody = addMsg("bot", ""); botBody.textContent = reply; }
+  else if (botBody) botBody.textContent = "";
+  rebuildReadHighlight(i);
+  renderTopMind();
+  setPhase(frames[i].phase);
+  highlightRow(i);
+  updateReadout(); setLiveState();
+}
+
+function applyReadHighlight(f) {
+  if (!userSpans || readPtr >= userSpans.length) return;
+  const rest = userSpans.slice(readPtr).map(s => s.textContent).join("");
+  let tok = f.tok || "";
+  if (!rest.startsWith(tok)) tok = tok.replace(/^\s+/, "");
+  if (tok && rest.startsWith(tok))
+    for (let j = 0; j < tok.length; j++, readPtr++) userSpans[readPtr].classList.add("read");
+}
+function rebuildReadHighlight(i) {
+  if (!userSpans) return;
+  userSpans.forEach(s => s.classList.remove("read")); readPtr = 0;
+  for (let k = 0; k <= i; k++) if (frames[k].phase === "reading") applyReadHighlight(frames[k]);
+}
+
+function highlightRow(i) {
+  ledgerRows.forEach((r, k) => r.classList.toggle("cur", k === i));
+  const row = ledgerRows[i];
+  if (row) ledger.scrollTop = row.offsetTop - ledger.clientHeight / 2 + row.offsetHeight / 2;
+}
+function updateReadout() {
+  tScrub.value = cursor < 0 ? 0 : cursor;
+  const f = frames[cursor];
+  const txt = f ? (f.phase === "reading" ? f.tok : f.out) : "";
+  tRead.textContent = `tok ${cursor + 1} / ${frames.length}`
+    + (txt ? ` · ${JSON.stringify(txt).slice(1, -1)}` : "");
+}
+
+/* transport controls */
+function pause() { playing = false; clearTimeout(tickTimer); tickTimer = null; setPlayIcon(); }
+function play() {
+  if (cursor >= frames.length - 1 && doneMsg) seekTo(0);   // replay finished response
+  playing = true; following = cursor >= frames.length - 1;
+  setPlayIcon(); setLiveState(); ensureTick();
+}
+tPlay.onclick = () => playing ? pause() : play();
+tScrub.addEventListener("input", () => { pause(); following = false; seekTo(+tScrub.value); });
+document.getElementById("t-start").onclick = () => { pause(); following = false; seekTo(0); };
+document.getElementById("t-prev").onclick  = () => { pause(); following = false; seekTo(cursor - 1); };
+document.getElementById("t-next").onclick  = () => { pause(); following = false; seekTo(cursor + 1); };
+tLive.onclick = () => { following = true; seekTo(frames.length - 1); if (!doneMsg) play(); setLiveState(); };
+document.getElementById("t-speed").onchange = e => speed = +e.target.value;
 
 /* ---------------- websocket / replay ---------------- */
 let ws;
@@ -693,12 +852,14 @@ function connect() {
       conn.textContent = `${m.model} · ${m.layers.length} lens layers`;
       return;
     }
-    queue.push(m); pump();
+    if (m.type === "frame") ingestFrame(m);
+    else if (m.type === "done") ingestDone(m);
   };
 }
 function submit(text) {
   if (busy || !text.trim() || !ws || ws.readyState !== 1) return;
   busy = true; send.disabled = true;
+  resetViz();                     // fresh timeline for this response
   addMsg("user", text);
   history.push({ role: "user", content: text });
   recorded.push({ type: "user", text });
@@ -716,14 +877,9 @@ document.getElementById("export").onclick = () => {
   a.href = URL.createObjectURL(blob); a.download = "session.json"; a.click();
 };
 
-/* replay: play back an exported session with live pacing, then loop */
-function resetAll() {
-  log.innerHTML = ""; history.length = 0; botBody = null; userSpans = null; readPtr = 0;
-  nRead = 0; nSaid = 0; field.thoughts.clear(); field.totalSeen = 0;
-  field.selected = null; field.hovered = null; inspectEl.style.display = "none";
-  ledger.innerHTML = ""; tmRows.innerHTML = "";
-  stat("s-read", 0); stat("s-said", 0); stat("s-thoughts", 0);
-}
+/* replay: play back an exported session with live pacing, then loop.
+   Frames flow through the same timeline as live, so replays are scrubbable too. */
+function resetAll() { log.innerHTML = ""; history.length = 0; resetViz(); }
 async function startReplay(url) {
   conn.textContent = "loading replay…";
   inp.disabled = true; inp.placeholder = "this is a replay — clone the repo to run it live";
@@ -742,11 +898,13 @@ async function startReplay(url) {
       conn.textContent = `${m.model} · replay`;
       step();
     } else if (m.type === "user") {
-      addMsg("user", m.text); setTimeout(step, 900);
+      resetViz(); addMsg("user", m.text); history.push({ role: "user", content: m.text });
+      setTimeout(step, 900);
     } else if (m.type === "frame") {
-      playFrame(m); setTimeout(step, m.phase === "reading" ? 90 : 60);
+      ingestFrame(m, false); if (following) advanceOne(frames.length - 1);
+      setTimeout(step, (m.phase === "reading" ? 90 : 60) / speed);
     } else if (m.type === "done") {
-      playFrame(m); setTimeout(step, 1600);
+      ingestDone(m); setTimeout(step, 1600);
     } else step();
   };
   step();

@@ -106,6 +106,27 @@ on the country-shaped-like-a-boot question, before generation begins.
 - The right panel records everything the canvas curates: the conversation, a
   live ranking of currently-active readouts, and a per-token ledger.
 
+## Timeline, words, and trace
+
+Live playback is fast; nothing is lost. Every frame of the current response is
+kept, so the whole display can be paused and re-inspected.
+
+- **Scrub the response.** A transport bar under the canvas (step / play /
+  scrubber / speed) seeks to any token; the canvas, top-of-mind ranking,
+  partial reply, and stats reconstruct to that exact moment. Click any ledger
+  row to jump to it. During generation the view rides the live edge — scrub
+  back freely, then hit **live** to catch up. Replays are scrubbable the same
+  way.
+- **The words tab** (beside the ledger) aggregates every word the lens read
+  out during the response — how many tokens it was active, its peak layer and
+  strength — ranked by presence. Click a word to jump to its peak moment and
+  load it in the trace view.
+- **The trace view** (cloud / trace, top left) plots one word's readout
+  strength across layers × tokens: the x-axis is shared with the scrubber,
+  amber while reading, blue while generating. It shows a concept climbing the
+  stack — and igniting across it just before being spoken — structure the
+  instantaneous cloud cannot show. Click anywhere on it to seek.
+
 ## Method
 
 ```
