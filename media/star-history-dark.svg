@@ -4,65 +4,21 @@
 <line x1="70" y1="473.0" x2="760" y2="473.0" stroke="#30363d" stroke-width="1"/>
 <text x="60" y="477.0" text-anchor="end" fill="#c9d1d9" font-size="13">0</text>
 <line x1="70" y1="392.4" x2="760" y2="392.4" stroke="#30363d" stroke-width="1"/>
-<text x="60" y="396.4" text-anchor="end" fill="#c9d1d9" font-size="13">10</text>
+<text x="60" y="396.4" text-anchor="end" fill="#c9d1d9" font-size="13">40</text>
 <line x1="70" y1="311.8" x2="760" y2="311.8" stroke="#30363d" stroke-width="1"/>
-<text x="60" y="315.8" text-anchor="end" fill="#c9d1d9" font-size="13">20</text>
+<text x="60" y="315.8" text-anchor="end" fill="#c9d1d9" font-size="13">80</text>
 <line x1="70" y1="231.2" x2="760" y2="231.2" stroke="#30363d" stroke-width="1"/>
-<text x="60" y="235.2" text-anchor="end" fill="#c9d1d9" font-size="13">30</text>
+<text x="60" y="235.2" text-anchor="end" fill="#c9d1d9" font-size="13">120</text>
 <line x1="70" y1="150.6" x2="760" y2="150.6" stroke="#30363d" stroke-width="1"/>
-<text x="60" y="154.6" text-anchor="end" fill="#c9d1d9" font-size="13">40</text>
+<text x="60" y="154.6" text-anchor="end" fill="#c9d1d9" font-size="13">160</text>
 <line x1="70" y1="70.0" x2="760" y2="70.0" stroke="#30363d" stroke-width="1"/>
-<text x="60" y="74.0" text-anchor="end" fill="#c9d1d9" font-size="13">50</text>
+<text x="60" y="74.0" text-anchor="end" fill="#c9d1d9" font-size="13">200</text>
 <text x="70.0" y="497" text-anchor="middle" fill="#c9d1d9" font-size="13">Jul 06</text>
 <text x="242.5" y="497" text-anchor="middle" fill="#c9d1d9" font-size="13">Jul 07</text>
 <text x="415.0" y="497" text-anchor="middle" fill="#c9d1d9" font-size="13">Jul 07</text>
-<text x="587.5" y="497" text-anchor="middle" fill="#c9d1d9" font-size="13">Jul 07</text>
-<text x="760.0" y="497" text-anchor="middle" fill="#c9d1d9" font-size="13">Jul 07</text>
-<path d="M70.0,464.9 L95.5,456.9 L127.8,448.8 L163.5,440.8 L172.7,432.7 L245.0,424.6 L266.0,416.6 L270.3,408.5 L288.3,400.5 L291.3,392.4 L292.3,384.3 L318.7,376.3 L323.2,368.2 L327.9,360.2 L348.8,352.1 L355.0,344.0 L358.6,336.0 L375.4,327.9 L391.3,319.9 L396.8,311.8 L405.7,303.7 L408.1,295.7 L417.1,287.6 L426.6,279.6 L432.9,271.5 L436.6,263.4 L439.4,255.4 L457.8,247.3 L462.3,239.3 L481.3,231.2 L496.7,223.1 L498.5,215.1 L511.6,207.0 L527.8,199.0 L542.6,190.9 L549.1,182.8 L554.3,174.8 L581.7,166.7 L596.8,158.7 L607.9,150.6 L634.5,142.5 L714.2,134.5 L730.1,126.4 L734.5,118.4 L760.0,118.4" fill="none" stroke="#e8a13c" stroke-width="2.5" stroke-linejoin="round"/>
-<circle cx="70.0" cy="464.9" r="3" fill="#e8a13c"/>
-<circle cx="95.5" cy="456.9" r="3" fill="#e8a13c"/>
-<circle cx="127.8" cy="448.8" r="3" fill="#e8a13c"/>
-<circle cx="163.5" cy="440.8" r="3" fill="#e8a13c"/>
-<circle cx="172.7" cy="432.7" r="3" fill="#e8a13c"/>
-<circle cx="245.0" cy="424.6" r="3" fill="#e8a13c"/>
-<circle cx="266.0" cy="416.6" r="3" fill="#e8a13c"/>
-<circle cx="270.3" cy="408.5" r="3" fill="#e8a13c"/>
-<circle cx="288.3" cy="400.5" r="3" fill="#e8a13c"/>
-<circle cx="291.3" cy="392.4" r="3" fill="#e8a13c"/>
-<circle cx="292.3" cy="384.3" r="3" fill="#e8a13c"/>
-<circle cx="318.7" cy="376.3" r="3" fill="#e8a13c"/>
-<circle cx="323.2" cy="368.2" r="3" fill="#e8a13c"/>
-<circle cx="327.9" cy="360.2" r="3" fill="#e8a13c"/>
-<circle cx="348.8" cy="352.1" r="3" fill="#e8a13c"/>
-<circle cx="355.0" cy="344.0" r="3" fill="#e8a13c"/>
-<circle cx="358.6" cy="336.0" r="3" fill="#e8a13c"/>
-<circle cx="375.4" cy="327.9" r="3" fill="#e8a13c"/>
-<circle cx="391.3" cy="319.9" r="3" fill="#e8a13c"/>
-<circle cx="396.8" cy="311.8" r="3" fill="#e8a13c"/>
-<circle cx="405.7" cy="303.7" r="3" fill="#e8a13c"/>
-<circle cx="408.1" cy="295.7" r="3" fill="#e8a13c"/>
-<circle cx="417.1" cy="287.6" r="3" fill="#e8a13c"/>
-<circle cx="426.6" cy="279.6" r="3" fill="#e8a13c"/>
-<circle cx="432.9" cy="271.5" r="3" fill="#e8a13c"/>
-<circle cx="436.6" cy="263.4" r="3" fill="#e8a13c"/>
-<circle cx="439.4" cy="255.4" r="3" fill="#e8a13c"/>
-<circle cx="457.8" cy="247.3" r="3" fill="#e8a13c"/>
-<circle cx="462.3" cy="239.3" r="3" fill="#e8a13c"/>
-<circle cx="481.3" cy="231.2" r="3" fill="#e8a13c"/>
-<circle cx="496.7" cy="223.1" r="3" fill="#e8a13c"/>
-<circle cx="498.5" cy="215.1" r="3" fill="#e8a13c"/>
-<circle cx="511.6" cy="207.0" r="3" fill="#e8a13c"/>
-<circle cx="527.8" cy="199.0" r="3" fill="#e8a13c"/>
-<circle cx="542.6" cy="190.9" r="3" fill="#e8a13c"/>
-<circle cx="549.1" cy="182.8" r="3" fill="#e8a13c"/>
-<circle cx="554.3" cy="174.8" r="3" fill="#e8a13c"/>
-<circle cx="581.7" cy="166.7" r="3" fill="#e8a13c"/>
-<circle cx="596.8" cy="158.7" r="3" fill="#e8a13c"/>
-<circle cx="607.9" cy="150.6" r="3" fill="#e8a13c"/>
-<circle cx="634.5" cy="142.5" r="3" fill="#e8a13c"/>
-<circle cx="714.2" cy="134.5" r="3" fill="#e8a13c"/>
-<circle cx="730.1" cy="126.4" r="3" fill="#e8a13c"/>
-<circle cx="734.5" cy="118.4" r="3" fill="#e8a13c"/>
-<text x="754.0" y="108.4" text-anchor="end" fill="#c9d1d9" font-size="14" font-weight="600">44 stars</text>
-<text x="760" y="517" text-anchor="end" fill="#30363d" font-size="11">updated 2026-07-07 12:11 UTC</text>
+<text x="587.5" y="497" text-anchor="middle" fill="#c9d1d9" font-size="13">Jul 08</text>
+<text x="760.0" y="497" text-anchor="middle" fill="#c9d1d9" font-size="13">Jul 08</text>
+<path d="M70.0,471.0 L79.7,469.0 L92.1,467.0 L105.7,464.9 L109.2,462.9 L136.8,460.9 L144.8,458.9 L146.4,456.9 L153.3,454.9 L154.4,452.9 L154.8,450.8 L164.9,448.8 L166.6,446.8 L168.4,444.8 L176.4,442.8 L178.8,440.8 L180.1,438.7 L186.5,436.7 L192.6,434.7 L194.7,432.7 L198.1,430.7 L199.0,428.7 L202.4,426.7 L206.1,424.6 L208.5,422.6 L209.9,420.6 L211.0,418.6 L218.0,416.6 L219.7,414.6 L227.0,412.6 L232.8,410.5 L233.5,408.5 L238.5,406.5 L244.7,404.5 L250.4,402.5 L252.8,400.5 L254.8,398.4 L265.3,396.4 L271.0,394.4 L275.3,392.4 L285.4,390.4 L315.8,388.4 L321.9,386.4 L323.6,384.3 L334.3,382.3 L344.9,380.3 L349.1,378.3 L353.0,376.3 L360.0,374.3 L360.1,372.2 L373.6,370.2 L374.3,368.2 L375.6,366.2 L378.8,364.2 L383.8,362.2 L389.9,360.2 L397.1,358.1 L399.9,356.1 L400.6,354.1 L408.0,352.1 L421.9,350.1 L424.7,348.1 L432.0,346.1 L451.1,344.0 L451.3,342.0 L454.0,340.0 L460.6,338.0 L461.2,336.0 L466.4,334.0 L471.3,332.0 L476.9,329.9 L481.7,327.9 L485.4,325.9 L487.4,323.9 L497.9,321.9 L499.1,319.9 L511.1,317.8 L514.3,315.8 L520.2,313.8 L526.0,311.8 L546.4,309.8 L546.7,307.8 L547.0,305.8 L567.6,303.7 L578.3,301.7 L579.7,299.7 L582.6,297.7 L591.6,295.7 L596.3,293.7 L599.6,291.6 L615.7,289.6 L616.3,287.6 L625.8,285.6 L627.3,283.6 L636.8,281.6 L651.6,279.6 L676.3,277.5 L679.5,275.5 L685.8,273.5 L688.4,271.5 L693.8,269.5 L695.7,267.5 L700.7,265.5 L701.9,263.4 L707.4,261.4 L707.5,259.4 L708.8,257.4 L711.0,255.4 L718.1,253.4 L723.6,251.3 L723.8,249.3 L725.1,247.3 L742.2,245.3 L757.4,243.3 L760.0,243.3" fill="none" stroke="#e8a13c" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="754.0" y="233.3" text-anchor="end" fill="#c9d1d9" font-size="14" font-weight="600">114 stars</text>
+<text x="760" y="517" text-anchor="end" fill="#30363d" font-size="11">updated 2026-07-08 08:43 UTC</text>
 </svg>
