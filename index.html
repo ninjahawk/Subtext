@@ -6,12 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #08080a; --panel: #0b0b0e; --hair: rgba(255,255,255,.06);
     --ink: rgba(255,255,255,.92); --dim: rgba(255,255,255,.40); --faint: rgba(255,255,255,.18);
-    --read: #e8a13c; --think: #6cb8e0;
+    --read: #e8a13c; --think: #6cb8e0; --ahead: #f0739c;
     --sans: "Inter", "Segoe UI", system-ui, sans-serif;
     --mono: "Cascadia Code", "Consolas", monospace;
     --serif: "Source Serif 4", Georgia, serif;
@@ -43,9 +43,55 @@
   #main { flex: 1; display: flex; min-height: 0; }
   #stage { position: relative; flex: 1; min-width: 0; }
   #mind { position: absolute; inset: 0; }
-  #foot { position: absolute; left: 0; right: 0; bottom: 48px; text-align: center;
-          font-size: 10.5px; color: var(--faint); user-select: none; pointer-events: none; }
-  #foot b { color: var(--dim); font-weight: 500; }
+  /* legend: the three colours, always in view */
+  #legend { position: absolute; top: 17px; right: 20px; z-index: 3; display: flex; gap: 14px;
+            font-size: 10.5px; color: var(--dim); user-select: none; pointer-events: none; }
+  #legend span { display: flex; align-items: center; gap: 6px; }
+  #legend i { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* speech line: what the model actually says, where the thoughts land */
+  #speech { position: absolute; left: 52px; right: 20px; bottom: 50px; height: 36px; z-index: 3;
+            display: flex; justify-content: flex-end; align-items: flex-end; overflow: hidden;
+            -webkit-mask-image: linear-gradient(to right, transparent, #000 22%);
+            mask-image: linear-gradient(to right, transparent, #000 22%); }
+  #speech-line { white-space: pre; font: 400 22px var(--serif); color: rgba(255,255,255,.88);
+                 line-height: 36px; }
+  #speech-line:empty::before { content: "its reply lands here, word by word";
+                 font-style: italic; font-size: 15px; color: var(--faint); }
+  #speech-line .cur { color: var(--dim); }
+  .ahead { color: var(--ahead); cursor: pointer; border-bottom: 1px solid color-mix(in srgb, var(--ahead) 55%, transparent); }
+  .ahead sup { font: 600 9.5px var(--sans); margin-left: 2px; vertical-align: 9px; opacity: .85; }
+  .ahead.incoming { color: transparent; border-color: transparent; }
+  .ahead.incoming sup { opacity: 0; }
+  .ahead.landed { animation: land .9s ease-out; }
+  @keyframes land {
+    0% { text-shadow: 0 0 18px var(--ahead); }
+    100% { text-shadow: 0 0 0 transparent; }
+  }
+
+  /* guide: plain-language explanation, opens on first visit */
+  #help { cursor: pointer; color: var(--dim); border-bottom: 1px dotted var(--faint); }
+  #help:hover { color: var(--ink); }
+  #guide { position: absolute; top: 52px; left: 16px; width: 390px; z-index: 7;
+           background: rgba(11,11,14,.94); border: 1px solid rgba(255,255,255,.1); border-radius: 14px;
+           padding: 20px 22px 18px; backdrop-filter: blur(18px);
+           animation: rise .35s ease-out; }
+  #guide.hidden { display: none; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  #guide h2 { font: italic 500 25px var(--serif); margin-bottom: 12px; letter-spacing: -.01em; }
+  #guide ol { list-style: none; padding: 0; counter-reset: g; }
+  #guide li { counter-increment: g; position: relative; padding: 0 0 11px 28px;
+              font-size: 12.5px; line-height: 1.55; color: rgba(255,255,255,.66); }
+  #guide li::before { content: counter(g); position: absolute; left: 0; top: 1px;
+              font: 500 10px var(--mono); color: var(--faint); width: 18px; height: 18px;
+              border: 1px solid var(--hair); border-radius: 50%; display: grid; place-items: center; }
+  #guide li b { color: var(--ink); font-weight: 500; }
+  #guide .rd { color: var(--read); } #guide .th { color: var(--think); } #guide .ah { color: var(--ahead); }
+  #guide .fine { font-size: 11px; color: var(--faint); line-height: 1.5; margin: 4px 0 14px; }
+  #guide button { border: 0; border-radius: 9px; padding: 7px 16px; cursor: pointer;
+                  background: rgba(255,255,255,.92); color: #000; font: 500 12px var(--sans); }
+  #guide .x { position: absolute; top: 12px; right: 14px; cursor: pointer; color: var(--faint); }
+  #guide .x:hover { color: var(--ink); }
 
   /* transport / scrubber */
   #transport { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; z-index: 6;
@@ -113,7 +159,7 @@
                 font-feature-settings: "tnum"; }
 
   /* inspector */
-  #inspect { position: absolute; top: 16px; left: 16px; width: 240px; display: none;
+  #inspect { position: absolute; top: 52px; left: 16px; width: 240px; display: none;
              background: rgba(11,11,14,.88); border: 1px solid var(--hair); border-radius: 12px;
              padding: 14px 16px 12px; backdrop-filter: blur(18px); z-index: 4; }
   #inspect h3 { font: italic 500 21px var(--serif); margin-bottom: 8px; }
@@ -170,6 +216,23 @@
               color: var(--ink); letter-spacing: -.01em; }
   #stats .l { font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
               color: var(--faint); margin-top: 1px; }
+  #stats .cell.ah { cursor: pointer; }
+  #stats .cell.ah .n { color: var(--ahead); }
+  #stats .cell.ah .l { letter-spacing: .06em; white-space: nowrap; }
+
+  /* thought-ahead list */
+  #aheadlist { flex: 1; overflow-y: auto; padding: 0 0 10px; scrollbar-width: thin;
+               scrollbar-color: rgba(255,255,255,.10) transparent; }
+  #aheadlist .empty { padding: 4px 18px; font-size: 11.5px; line-height: 1.55; color: var(--faint); }
+  .ah-row { display: flex; align-items: center; gap: 9px; padding: 2.5px 18px; height: 24px; cursor: pointer; }
+  .ah-row:hover { background: rgba(255,255,255,.04); }
+  .ah-row .w { font: italic 400 15px var(--serif); width: 110px; white-space: nowrap;
+               overflow: hidden; text-overflow: ellipsis; color: var(--ahead); }
+  .ah-row .bar { flex: 1; height: 2px; background: rgba(255,255,255,.05); border-radius: 1px; }
+  .ah-row .bar i { display: block; height: 100%; border-radius: 1px; background: var(--ahead); opacity: .7; }
+  .ah-row .ld { font: 10px var(--mono); color: var(--dim); width: 64px; text-align: right;
+                font-feature-settings: "tnum"; }
+  .ah-row .ph { width: 6px; height: 6px; border-radius: 50%; flex: none; }
 
   /* top of mind */
   #topmind { border-bottom: 1px solid var(--hair); padding-bottom: 10px; }
@@ -206,10 +269,14 @@
   /* ---------- mobile: stack canvas above a scrolling console ---------- */
   @media (max-width: 760px) {
     #hdr { padding: 12px 14px 0; gap: 10px; }
-    #hdr .sub, #export { display: none; }
+    #hdr .sub, #export, #conn { display: none; }
+    #help { white-space: nowrap; }
     #main { flex-direction: column; }
     #stage { flex: none; height: 46dvh; }
-    #foot { display: none; }
+    #legend { display: none; }
+    #speech { left: 16px; right: 12px; bottom: 46px; height: 28px; }
+    #speech-line { font-size: 17px; line-height: 28px; }
+    #guide { top: 48px; left: 12px; right: 12px; width: auto; max-height: calc(100% - 60px); overflow-y: auto; }
     #console { width: 100%; flex: 1; min-height: 0; overflow-y: auto;
                border-left: 0; border-top: 1px solid var(--line, rgba(255,255,255,.07)); }
     #chat { max-height: none; }
@@ -227,6 +294,7 @@
   <span class="mark">Subtext</span>
   <span class="sub">the words beneath the words</span>
   <div class="right">
+    <span id="help">how to read this</span>
     <span id="export" style="cursor:pointer" title="download this session as a replay file">⤓ session</span>
     <span id="conn">connecting…</span>
     <div id="phase"><span class="dot"></span><span id="phasetext">idle</span></div>
@@ -249,10 +317,34 @@
       <div class="kv"><span>frames</span><b id="in-frames">—</b></div>
       <canvas id="in-spark" width="208" height="44"></canvas>
     </div>
-    <div id="foot">
-      thoughts sink toward speech · <b>size</b> = strength ·
-      <b style="color:var(--read)">amber</b> = while reading you ·
-      <b style="color:var(--think)">blue</b> = while replying · hover a word for its layer trace
+    <div id="legend">
+      <span><i style="background:var(--read)"></i>reading you</span>
+      <span><i style="background:var(--think)"></i>answering</span>
+      <span><i style="background:var(--ahead)"></i>thought ahead</span>
+    </div>
+    <div id="speech" title="what the model actually says"><div id="speech-line"></div></div>
+    <div id="guide" class="hidden">
+      <span class="x" title="close">✕</span>
+      <h2>What you're looking at</h2>
+      <ol>
+        <li><b>The floating words are thoughts, not output.</b> Each one is a word the
+          model's internal state is leaning toward right now, decoded from inside the
+          network with a Jacobian lens.</li>
+        <li><b>Height shows how far a thought has travelled.</b> Near the top it's early
+          layers, still taking your message in. Near the bottom it's late layers, close
+          to being spoken. Bigger and brighter means stronger.</li>
+        <li><b><span class="rd">Amber</span> while it reads your message,
+          <span class="th">blue</span> while it answers.</b> The amber phase happens
+          before a single word of reply exists.</li>
+        <li><b>The line along the bottom is what it actually says.</b> A
+          <span class="ah">pink</span> word was already on its mind before it said it.
+          <span class="ah">+6</span> means it first surfaced six tokens before it was
+          said. Click one to jump back to that moment.</li>
+      </ol>
+      <p class="fine">Pause and scrub the timeline to revisit any moment. Click any floating
+        word to inspect it. This shows what information is available inside the model,
+        not what it feels.</p>
+      <button id="guide-ok">Got it</button>
     </div>
     <div id="transport" class="hidden">
       <button id="t-start" title="jump to start">⏮</button>
@@ -288,24 +380,26 @@
     </div>
 
     <div id="stats">
-      <div class="cell"><div class="n" id="s-read">0</div><div class="l">read</div></div>
-      <div class="cell"><div class="n" id="s-said">0</div><div class="l">said</div></div>
-      <div class="cell"><div class="n" id="s-thoughts">0</div><div class="l">thoughts</div></div>
-      <div class="cell"><div class="n" id="s-tps">–</div><div class="l">tok/s</div></div>
+      <div class="cell" title="tokens of your message it has read"><div class="n" id="s-read">0</div><div class="l">read</div></div>
+      <div class="cell" title="tokens of reply it has said"><div class="n" id="s-said">0</div><div class="l">said</div></div>
+      <div class="cell" title="distinct words that surfaced inside it"><div class="n" id="s-thoughts">0</div><div class="l">concepts</div></div>
+      <div class="cell ah" id="c-ahead" title="words it said that were already on its mind 2+ tokens earlier"><div class="n" id="s-ahead">0</div><div class="l">thought ahead</div></div>
     </div>
 
     <div id="topmind">
-      <div class="cap">top of mind</div>
+      <div class="cap">on its mind right now</div>
       <div id="tm-rows"></div>
     </div>
 
     <div id="ledger-wrap">
       <div class="cap tabs">
-        <span id="tab-ledger" class="tab on">ledger</span>
-        <span id="tab-words" class="tab">words<span id="words-count"></span></span>
+        <span id="tab-ledger" class="tab on">per token</span>
+        <span id="tab-words" class="tab">all words<span id="words-count"></span></span>
+        <span id="tab-ahead" class="tab">thought ahead<span id="ahead-count"></span></span>
       </div>
       <div id="ledger"></div>
       <div id="words" style="display:none"></div>
+      <div id="aheadlist" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -391,10 +485,11 @@ const SERIF = '"Source Serif 4", Georgia, serif';
 const MONO = '"Cascadia Code", Consolas, monospace';
 function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; }
 
-const RAIL_TOP = 0.10, RAIL_BOT = 0.88;
+const RAIL_TOP = 0.10, RAIL_BOT_GAP = 130;   // px kept free below the last rail for the speech line
 let RAILS = [], nLayersG = 32;
 function layoutRails(layers, n) { nLayersG = n; RAILS = layers.map(l => ({ layer: l, frac: l / (n - 1) })); }
-const railY = f => H * lerp(RAIL_TOP, RAIL_BOT, f);
+const railY = f => lerp(H * RAIL_TOP, H - RAIL_BOT_GAP, f);
+const RAIL_LABEL_TOP = "early layers · taking it in", RAIL_LABEL_BOT = "late layers · about to speak";
 
 /* absolute strength mapping — a weak thought LOOKS weak (honest display) */
 const strength = p => Math.min(1, Math.pow(p, 0.45) * 1.05);
@@ -443,7 +538,7 @@ const MAX_VISIBLE = 10;
 let viewMode = "cloud";       // "cloud" | "trace" (layer × token view)
 let traceWord = null;         // the word the trace view follows
 const field = {
-  thoughts: new Map(), pulses: [],
+  thoughts: new Map(), pulses: [], landings: [],
   dominant: { word: null, run: 0 }, lastCalligram: new Map(),
   totalSeen: 0, selected: null, hovered: null,
 
@@ -505,8 +600,31 @@ const field = {
     for (const t of list) t.x = Math.max(80, Math.min(W - 50, t.x));
   },
 
+  /* a thought that just became speech drops from the cloud onto the speech line */
+  drawLandings(now) {
+    if (!this.landings.length) return;
+    const sr = stage.getBoundingClientRect();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    this.landings = this.landings.filter(L => {
+      const r = L.el.getBoundingClientRect(), supW = L.el.lastChild.getBoundingClientRect().width;
+      const tx = r.left - sr.left + (r.width - supW) / 2, ty = r.top - sr.top + r.height / 2;
+      const p = Math.min(1, (now - L.t0) / 750), e = p * p;   // accelerates, like sinking
+      const x = lerp(L.x0, tx, e), y = lerp(L.y0, ty, e);
+      ctx.strokeStyle = `rgba(240,115,156,${(0.3 * (1 - p)).toFixed(3)})`; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(L.x0, L.y0); ctx.lineTo(x, y); ctx.stroke();
+      ctx.font = `italic 400 ${lerp(L.size0, 22, e).toFixed(1)}px ${SERIF}`;
+      ctx.shadowColor = "rgba(240,115,156,0.7)"; ctx.shadowBlur = 14;
+      ctx.fillStyle = "rgba(240,115,156,0.95)"; ctx.fillText(L.text, x, y);
+      ctx.shadowBlur = 0;
+      if (p < 1) return true;
+      landed(L.el);
+      this.pulses.push({ x: tx, y: ty, r: 6, a: .55, c: "240,115,156" });
+      return false;
+    });
+  },
+
   render(now) {
-    if (viewMode === "trace") { renderTrace(); return; }
+    if (viewMode === "trace") { this.landings.forEach(L => landed(L.el)); this.landings = []; renderTrace(); return; }
     ctx.clearRect(0, 0, W, H);
 
     // rails — hairline guides with quiet labels
@@ -524,8 +642,8 @@ const field = {
       ctx.fillStyle = "rgba(255,255,255,0.26)";
       ctx.font = `10px var(--sans), sans-serif`;
       ctx.font = `10px Inter, sans-serif`;
-      ctx.fillText("perception", 52, railY(RAILS[0].frac) - 12);
-      ctx.fillText("speech", 52, railY(RAILS[RAILS.length - 1].frac) + 13);
+      ctx.fillText(RAIL_LABEL_TOP, 52, railY(RAILS[0].frac) - 12);
+      ctx.fillText(RAIL_LABEL_BOT, 52, railY(RAILS[RAILS.length - 1].frac) + 13);
     }
 
     const list = [...this.thoughts.values()];
@@ -548,7 +666,7 @@ const field = {
     this.pulses = this.pulses.filter(p => p.a > 0.02);
     for (const p of this.pulses) {
       p.r += 1.5; p.a *= 0.94;
-      ctx.strokeStyle = `rgba(210,220,245,${p.a.toFixed(3)})`;
+      ctx.strokeStyle = `rgba(${p.c || "210,220,245"},${p.a.toFixed(3)})`;
       ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.stroke();
     }
 
@@ -590,6 +708,10 @@ const field = {
         ctx.fillStyle = `rgba(${cr},${cg},${cb},${wa.toFixed(3)})`;
         ctx.fillText(t.word, t.x, y);
         ctx.shadowBlur = 0;
+        if (speech.aheadSet.has(t.word)) {   // already said, and thought of ahead of time
+          ctx.fillStyle = `rgba(240,115,156,${(wa * 0.9).toFixed(3)})`;
+          ctx.fillRect(t.x - t.w / 2, y + t.size * 0.34, t.w, 1.5);
+        }
       }
       if (t.calligram && t.calligramAlpha > 0.02) {
         const k = (t.size * 3.6) / t.calligram.S;
@@ -605,6 +727,7 @@ const field = {
       }
       t.hitY = y;
     }
+    this.drawLandings(now);
   },
 };
 
@@ -628,13 +751,13 @@ function renderTrace() {
   const botY = RAILS.length ? railY(RAILS[RAILS.length - 1].frac) : H - 40;
   if (RAILS.length) {
     ctx.fillStyle = "rgba(255,255,255,0.26)"; ctx.font = `10px Inter, sans-serif`;
-    ctx.fillText("perception", 52, topY - 12); ctx.fillText("speech", 52, botY + 13);
+    ctx.fillText(RAIL_LABEL_TOP, 52, topY - 12); ctx.fillText(RAIL_LABEL_BOT, 52, botY + 13);
   }
   const N = frames.length, word = traceWord;
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   if (!N || !word) {
     ctx.fillStyle = "rgba(255,255,255,.3)"; ctx.font = `13px Inter, sans-serif`;
-    ctx.fillText(N ? "open the “words” tab and click a word to trace it here"
+    ctx.fillText(N ? "open “all words” or “thought ahead” and click a word to trace it here"
                    : "send a message, then switch to trace", TRACE_X0, (topY + botY) / 2);
     return;
   }
@@ -664,6 +787,14 @@ function renderTrace() {
   const lw = ctx.measureText(word).width;
   ctx.fillStyle = "rgba(255,255,255,.3)"; ctx.font = `10px ${MONO}`;
   ctx.fillText(`strength across layers × ${N} tokens`, TRACE_X0 + lw + 14, topY - 27);
+  // mark every token where this word was actually spoken
+  const saidAt = replyWords().said.get(word) || [];
+  ctx.fillStyle = "rgba(240,115,156,.9)"; ctx.textAlign = "center";
+  for (const k of saidAt) {
+    const x = TRACE_X0 + k * colW + colW / 2;
+    ctx.beginPath(); ctx.moveTo(x, botY + 24); ctx.lineTo(x - 4, botY + 31); ctx.lineTo(x + 4, botY + 31); ctx.fill();
+  }
+  if (saidAt.length) ctx.fillText("said", TRACE_X0 + saidAt[0] * colW + colW / 2, botY + 43);
 }
 
 /* ---------------- pointer: hover + inspect ---------------- */
@@ -732,20 +863,175 @@ const log = document.getElementById("log"), inp = document.getElementById("inp")
       phaseText = document.getElementById("phasetext"), conn = document.getElementById("conn"),
       ledger = document.getElementById("ledger"), tmRows = document.getElementById("tm-rows");
 const words = document.getElementById("words"), wordsCount = document.getElementById("words-count");
+const aheadList = document.getElementById("aheadlist"), aheadCount = document.getElementById("ahead-count");
 const history = [];
+
+/* ---------------- speech line + thought-ahead detection ----------------
+   Spells the reply into words as tokens arrive. A spoken word counts as
+   "thought ahead" when the lens kept surfacing it in the run-up to saying it
+   (no silence longer than RUN_GAP tokens) and that run began at least
+   AHEAD_MIN tokens before the word. If it also surfaced while the model was
+   reading the user's message, the lead runs from there: that is the
+   verdict-before-reply effect, and the reply's opening tokens often bury it.
+   A lead of 1 is ordinary next-token prediction, and a lone flicker long
+   before is coincidence; neither counts, nor do the user's words or filler. */
+const AHEAD_MIN = 2, RUN_GAP = 8, SEEN_MIN = 0.14;   // SEEN_MIN matches the cloud's visibility floor
+const STOP = new Set(("the and that this with for you your are was were not but have has had can will its "
+  + "there their they them then than what which who whom from into about just also very some any all one our "
+  + "out how why when where here let get got yes sure okay well like may might would could should does did "
+  + "doing been being these those such each other more most only own same too through over under after "
+  + "before while because since until between against answer answers question response").split(" "));
+const SPECIAL = /^\s*(<\|[^|]*\|>|<\/?think>)\s*$/;   // chat-template tokens the server streams raw
+let heard = new Set();   // words in the user's latest message
+const wasHeard = k => heard.has(k) || heard.has(k.replace(/e?s$/, "")) || heard.has(k + "s");
+
+function makeSpeller(sink = {}) {
+  return {
+    seen: new Map(), ahead: [], aheadSet: new Set(), said: new Map(), cur: null, last: " ",
+    observe(f, i) {
+      if (f.phase === "thinking" && f.out && !SPECIAL.test(f.out)) for (const ch of f.out) {
+        if (/[A-Za-z]/.test(ch) || (this.cur && /['’\-]/.test(ch))) {
+          if (!this.cur) this.cur = { text: "", frame: i };
+          this.cur.text += ch; sink.spell && sink.spell(this.cur.text);
+        } else { this.finish(); this.text(ch); }
+      }
+      for (const th of f.thoughts) {
+        if (strength(th.p) < SEEN_MIN) continue;
+        if (!this.seen.has(th.w)) this.seen.set(th.w, []);
+        this.seen.get(th.w).push({ i, phase: f.phase });
+      }
+    },
+    text(ch) {
+      const c = /\s/.test(ch) ? " " : /[*#`]/.test(ch) ? "" : ch;   // markdown noise off the line
+      if (!c || (c === " " && this.last === " ")) return;
+      this.last = c; sink.text && sink.text(c);
+    },
+    finish() {
+      if (!this.cur) return;
+      const { text, frame } = this.cur; this.cur = null; this.last = "x";
+      const key = text.toLowerCase().replace(/['’\-]+$/, "");
+      if (!this.said.has(key)) this.said.set(key, []);
+      this.said.get(key).push(frame);
+      let entry = null;
+      const hits = this.seen.get(key) || [];
+      let j = hits.length - 1;
+      while (j >= 0 && hits[j].i >= frame) j--;   // only what surfaced before it began saying the word
+      if (j >= 0 && frame - hits[j].i <= RUN_GAP && !this.aheadSet.has(key) && !wasHeard(key) && !STOP.has(key)) {
+        while (j > 0 && hits[j].i - hits[j - 1].i <= RUN_GAP) j--;   // back to the start of the run-up
+        if (hits[0].phase === "reading") j = 0;
+        const lead = frame - hits[j].i;
+        if (lead >= AHEAD_MIN) {
+          entry = { word: key, lead, first: hits[j].i, phase: hits[j].phase, said: frame };
+          this.ahead.push(entry); this.aheadSet.add(key);
+        }
+      }
+      sink.word && sink.word(text, entry);
+    },
+  };
+}
+
+/* the live line on the stage, built incrementally so landing animations survive */
+const speechLine = document.getElementById("speech-line");
+const lineSink = {
+  node: null, curEl: null,
+  reset() { speechLine.textContent = ""; this.node = null; this.curEl = null; field.landings = []; },
+  text(c) {
+    if (!this.node) { this.node = document.createTextNode(""); speechLine.appendChild(this.node); }
+    this.node.data += c;
+  },
+  spell(t) {
+    if (!this.curEl) {
+      this.node = null;
+      this.curEl = document.createElement("span"); this.curEl.className = "cur";
+      speechLine.appendChild(this.curEl);
+    }
+    this.curEl.textContent = t;
+  },
+  word(text, entry) {
+    const el = this.curEl; this.curEl = null;
+    if (!entry) { el.replaceWith(text); return; }
+    el.className = "ahead"; el.textContent = text; el.dataset.word = entry.word;
+    const sup = document.createElement("sup"); sup.textContent = "+" + entry.lead; el.appendChild(sup);
+    el.title = `first surfaced ${entry.lead} tokens before it said it, while `
+      + `${entry.phase === "reading" ? "reading your message" : "answering"}. Click to jump there.`;
+    if (rebuilding) return;
+    const t = field.thoughts.get(entry.word);
+    if (viewMode === "cloud" && t && t.s > 0.04 && t.hitY !== undefined) {
+      el.classList.add("incoming");
+      field.landings.push({ text: t.word, x0: t.x, y0: t.hitY, size0: t.size, el, t0: performance.now() });
+    } else landed(el);
+  },
+};
+function landed(el) { el.classList.remove("incoming"); el.classList.add("landed"); }
+let speech = makeSpeller(lineSink);
+function rewindSpeech() { lineSink.reset(); speech = makeSpeller(lineSink); }
+
+/* the whole response so far, independent of where the scrubber sits */
+let replyCache = null;
+function replyWords() {
+  if (!replyCache || replyCache.n !== frames.length || replyCache.done !== !!doneMsg) {
+    const sp = makeSpeller();
+    frames.forEach((f, i) => sp.observe(f, i));
+    if (doneMsg) sp.finish();
+    replyCache = { n: frames.length, done: !!doneMsg, sp };
+  }
+  return replyCache.sp;
+}
+
+function jumpToThought(e) {
+  pause(); following = false; traceWord = e.word;
+  seekTo(e.first); setLiveState(); selectWord(e.word);
+}
+speechLine.addEventListener("click", ev => {
+  const el = ev.target.closest(".ahead");
+  const e = el && speech.ahead.find(a => a.word === el.dataset.word);
+  if (e) jumpToThought(e);
+});
+
+function renderAhead() {
+  const list = replyWords().ahead;
+  aheadList.innerHTML = "";
+  if (!list.length) {
+    const p = document.createElement("div"); p.className = "empty";
+    p.textContent = frames.length
+      ? "Nothing yet. When it says a word that was already on its mind two or more tokens earlier, it collects here."
+      : "Send a message. Words it thinks of before it says them collect here.";
+    aheadList.appendChild(p); return;
+  }
+  const maxLead = Math.max(...list.map(e => e.lead));
+  for (const e of [...list].sort((a, b) => b.lead - a.lead)) {
+    const r = document.createElement("div"); r.className = "ah-row";
+    const ph = document.createElement("span"); ph.className = "ph";
+    ph.style.background = e.phase === "reading" ? "var(--read)" : "var(--think)";
+    const w = document.createElement("span"); w.className = "w"; w.textContent = e.word;
+    const bar = document.createElement("span"); bar.className = "bar";
+    const fill = document.createElement("i"); fill.style.width = (100 * e.lead / maxLead).toFixed(0) + "%";
+    bar.appendChild(fill);
+    const ld = document.createElement("span"); ld.className = "ld"; ld.textContent = `+${e.lead} tok`;
+    r.append(ph, w, bar, ld);
+    r.title = `began surfacing at token ${e.first + 1} while `
+      + `${e.phase === "reading" ? "reading your message" : "answering"}, said at token ${e.said + 1}`;
+    r.addEventListener("click", () => jumpToThought(e));
+    aheadList.appendChild(r);
+  }
+}
 
 /* ---------------- cumulative word statistics (panel A) ---------------- */
 let panelMode = "ledger";
+const PANELS = { ledger, words, ahead: aheadList };
 function setPanel(mode) {
   panelMode = mode;
-  document.getElementById("tab-ledger").classList.toggle("on", mode === "ledger");
-  document.getElementById("tab-words").classList.toggle("on", mode === "words");
-  ledger.style.display = mode === "ledger" ? "" : "none";
-  words.style.display = mode === "words" ? "" : "none";
+  for (const [m, el] of Object.entries(PANELS)) {
+    document.getElementById("tab-" + m).classList.toggle("on", mode === m);
+    el.style.display = mode === m ? "" : "none";
+  }
   if (mode === "words") renderWordsTable();
+  if (mode === "ahead") renderAhead();
 }
 document.getElementById("tab-ledger").onclick = () => setPanel("ledger");
 document.getElementById("tab-words").onclick = () => setPanel("words");
+document.getElementById("tab-ahead").onclick = () => setPanel("ahead");
+document.getElementById("c-ahead").onclick = () => setPanel("ahead");
 
 /* aggregate every distinct word across the whole response */
 function computeWordStats() {
@@ -795,7 +1081,7 @@ function renderWordsTable() {
   wordsCount.textContent = rows.length ? " " + rows.length : "";
 }
 let busy = false, botBody = null, userSpans = null, readPtr = 0;
-let nRead = 0, nSaid = 0, tpsWindow = [];
+let nRead = 0, nSaid = 0;
 
 function addMsg(role, text) {
   const m = document.createElement("div"); m.className = "msg " + role;
@@ -803,6 +1089,7 @@ function addMsg(role, text) {
   who.textContent = role === "user" ? "you" : "model";
   const body = document.createElement("div"); body.className = "body";
   if (role === "user") {
+    heard = new Set(text.toLowerCase().match(/[a-z][a-z'’\-]*/g) || []);
     userSpans = []; readPtr = 0;
     for (const ch of text) {
       const s = document.createElement("span"); s.textContent = ch;
@@ -812,7 +1099,8 @@ function addMsg(role, text) {
   m.append(who, body); log.appendChild(m); log.scrollTop = log.scrollHeight;
   return body;
 }
-const setPhase = p => { phaseText.textContent = p; phaseWrap.className = p === "idle" ? "" : p; };
+const PHASE_LABEL = { reading: "reading your message", thinking: "answering", idle: "idle" };
+const setPhase = p => { phaseText.textContent = PHASE_LABEL[p] || p; phaseWrap.className = p === "idle" ? "" : p; };
 const stat = (id, v) => document.getElementById(id).textContent = v;
 
 function buildLedgerRow(f, idx) {
@@ -851,7 +1139,11 @@ function renderTopMind() {
     r.append(w, bar, d); tmRows.appendChild(r);
   }
   stat("s-thoughts", field.totalSeen);
+  stat("s-ahead", speech.ahead.length);
+  const nAhead = replyWords().ahead.length;
+  aheadCount.textContent = nAhead ? " " + nAhead : "";
   if (panelMode === "words") renderWordsTable();
+  if (panelMode === "ahead") renderAhead();
 }
 
 /* ---------------- timeline player ----------------
@@ -885,12 +1177,14 @@ function resetViz() {
   frames.length = 0; ledgerRows.length = 0; cursor = -1; doneMsg = null;
   following = true; playing = false;
   botBody = null; userSpans = null; readPtr = 0;
-  nRead = 0; nSaid = 0; tpsWindow = [];
+  nRead = 0; nSaid = 0;
   field.thoughts.clear(); field.totalSeen = 0; field.pulses.length = 0;
   field.dominant = { word: null, run: 0 };
   field.selected = null; field.hovered = null; inspectEl.style.display = "none";
   ledger.innerHTML = ""; tmRows.innerHTML = ""; words.innerHTML = ""; traceWord = null;
-  stat("s-read", 0); stat("s-said", 0); stat("s-thoughts", 0); stat("s-tps", "–");
+  rewindSpeech(); replyCache = null; aheadCount.textContent = "";
+  if (panelMode === "ahead") renderAhead();
+  stat("s-read", 0); stat("s-said", 0); stat("s-thoughts", 0); stat("s-ahead", 0);
   tScrub.max = 0; tScrub.value = 0; tRead.textContent = "tok 0 / 0";
   setPlayIcon(); setLiveState();
 }
@@ -909,6 +1203,7 @@ function ingestDone(m) {
   if (!REPLAY) { send.disabled = false; inp.focus(); }
   if (botBody) botBody.textContent = m.text;
   if (following) setPhase("idle");
+  if (cursor === frames.length - 1) { speech.finish(); renderTopMind(); }
   ensureTick();
 }
 
@@ -935,12 +1230,12 @@ function advanceOne(i) {
   if (f.phase === "thinking" && f.out) {
     nSaid++; stat("s-said", nSaid);
     if (!botBody) botBody = addMsg("bot", "");
-    botBody.textContent += f.out; log.scrollTop = log.scrollHeight;
+    if (!SPECIAL.test(f.out)) botBody.textContent += f.out;
+    log.scrollTop = log.scrollHeight;
   }
+  speech.observe(f, i);
+  if (doneMsg && i === frames.length - 1) speech.finish();
   renderTopMind();
-  tpsWindow.push(performance.now());
-  tpsWindow = tpsWindow.filter(t => performance.now() - t < 3000);
-  stat("s-tps", (tpsWindow.length / 3).toFixed(1));
   updateReadout(); setLiveState();
 }
 
@@ -952,16 +1247,18 @@ function seekTo(i) {
   rebuilding = true;
   field.thoughts.clear(); field.totalSeen = 0; field.pulses.length = 0;
   field.dominant = { word: null, run: 0 };
-  for (let k = 0; k <= i; k++) field.applyFrame(frames[k]);
+  rewindSpeech();
+  for (let k = 0; k <= i; k++) { field.applyFrame(frames[k]); speech.observe(frames[k], k); }
+  if (doneMsg && i === frames.length - 1) speech.finish();
   rebuilding = false;
   for (const t of field.thoughts.values()) t.s = t.target;   // snap — frozen frame
   let r = 0, s = 0, reply = "";
   for (let k = 0; k <= i; k++) {
     const f = frames[k];
     if (f.phase === "reading") r++;
-    if (f.phase === "thinking" && f.out) { s++; reply += f.out; }
+    if (f.phase === "thinking" && f.out) { s++; if (!SPECIAL.test(f.out)) reply += f.out; }
   }
-  nRead = r; nSaid = s; stat("s-read", r); stat("s-said", s); stat("s-tps", "–");
+  nRead = r; nSaid = s; stat("s-read", r); stat("s-said", s);
   if (reply) { if (!botBody) botBody = addMsg("bot", ""); botBody.textContent = reply; }
   else if (botBody) botBody.textContent = "";
   rebuildReadHighlight(i);
@@ -1090,6 +1387,19 @@ async function startReplay(url) {
   };
   step();
 }
+
+/* ---------------- guide: shown once, reopened from the header ---------------- */
+const guide = document.getElementById("guide");
+function showGuide(on) {
+  guide.classList.toggle("hidden", !on);
+  if (!on) try { localStorage.setItem("subtext.guideSeen", "1"); } catch {}
+}
+document.getElementById("help").onclick = () => showGuide(guide.classList.contains("hidden"));
+document.getElementById("guide-ok").onclick = () => showGuide(false);
+document.querySelector("#guide .x").onclick = () => showGuide(false);
+let guideSeen = false;
+try { guideSeen = !!localStorage.getItem("subtext.guideSeen"); } catch {}
+if (!guideSeen) showGuide(true);
 
 /* ---------------- loop ---------------- */
 resize();
