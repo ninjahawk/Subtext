@@ -18,6 +18,7 @@ import transformers
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 import jlens
 from jlens.vis import _meaningful_token_mask
@@ -165,6 +166,7 @@ def encode_chat(messages: list[dict]) -> tuple[torch.Tensor, int]:
 
 
 app = FastAPI()
+app.mount("/assets/fonts", StaticFiles(directory=HERE / "assets/fonts"), name="fonts")
 
 
 @app.get("/")
